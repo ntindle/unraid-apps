@@ -4,8 +4,8 @@ An unofficial Unraid template for the
 [ntindle fork](https://github.com/ntindle/CLIProxyAPI) of
 [CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI).
 
-CLIProxyAPI puts Claude Code and Codex behind one endpoint on your own server. You sign your
-Claude and ChatGPT subscription accounts in once; the proxy spreads requests across them, keeps
+CLIProxyAPI puts Claude Code, Codex and the Muse CLI behind one endpoint on your own server. You
+sign your Claude, ChatGPT and Meta accounts in once; the proxy spreads requests across them, keeps
 each session on one account, and shows every account's quota and reset times in a web console.
 
 This repository holds deployment metadata only: the template, its icon and the checks that keep
@@ -104,6 +104,49 @@ api_key_model_discovery = true
 
 `supports_websockets = true` is what makes Codex open a WebSocket to the proxy, and the proxy
 then talks to ChatGPT over a WebSocket too.
+
+Muse, in `~/.config/muse/settings.json`:
+
+```json
+{
+  "endpoint_transport": {
+    "base_url": "PROXY_URL/v1",
+    "auth": "bearer"
+  }
+}
+```
+
+Muse only sends its key to an endpoint pinned in `settings.json`; passing `--base-url` is not
+enough. Store the key with `muse auth set --api-key-stdin`, which reads it from standard input, or
+set it in the `META_API_KEY` environment variable.
+
+### One key per tool
+
+The proxy translates between protocols, so any client API key can reach every signed-in account:
+Codex could run on a Claude subscription and the other way round. To keep each tool on its own
+provider, give each one its own key and tie the key's prefix to a provider in `config.yaml`:
+
+```yaml
+access:
+  api-keys:
+    - "sk-claude-<random>"
+    - "sk-codex-<random>"
+    - "sk-muse-<random>"
+
+client:
+  key-scopes:
+    - key-prefix: "sk-claude-"
+      providers: ["claude"]
+    - key-prefix: "sk-codex-"
+      providers: ["codex"]
+    - key-prefix: "sk-muse-"
+      providers: ["meta"]
+```
+
+A key with a scope only lists that provider's models, and a request for any other model is
+answered `400 model_not_found`. A key that matches no entry is unrestricted, so remove the key the
+container generated on first start once every tool has its own.
+[FORK.md](https://github.com/ntindle/CLIProxyAPI/blob/main/FORK.md#key-scopes) has the details.
 
 ## Tailscale
 

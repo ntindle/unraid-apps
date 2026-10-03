@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CommunityApplications>
+  <Profile>Unraid template maintained by ntindle for the ntindle fork of CLIProxyAPI, a self-hosted proxy that puts Claude Code and Codex behind one endpoint and spreads requests across your own subscription accounts.</Profile>
+  <Icon>https://raw.githubusercontent.com/ntindle/cliproxyapi-unraid/main/images/cliproxyapi.png</Icon>
+  <WebPage>https://github.com/ntindle/cliproxyapi-unraid</WebPage>
+  <Forum>https://github.com/ntindle/cliproxyapi-unraid/issues</Forum>
+</CommunityApplications>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CommunityApplications>
+  <Profile>Unraid Community Applications templates maintained by ntindle. This repository currently packages the official Executor self-host image as a secure, persistent MCP gateway for AI agents.</Profile>
+  <Icon>https://raw.githubusercontent.com/ntindle/executor-unraid/main/images/executor.png</Icon>
+  <WebPage>https://github.com/ntindle/executor-unraid</WebPage>
+  <Forum>https://github.com/ntindle/executor-unraid/issues</Forum>
+</CommunityApplications>

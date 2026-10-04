@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Container version="2">
+  <Name>Executor</Name>
+  <Repository>ghcr.io/usefulsoftwareco/executor-selfhost:latest</Repository>
+  <Registry>https://github.com/UsefulSoftwareCo/executor/pkgs/container/executor-selfhost</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Privileged>false</Privileged>
+
+  <Support>https://github.com/ntindle/executor-unraid/issues</Support>
+  <Project>https://github.com/UsefulSoftwareCo/executor</Project>
+  <ReadMe>https://raw.githubusercontent.com/ntindle/executor-unraid/main/README.md</ReadMe>
+  <License>MIT (upstream application and template)</License>
+
+  <Overview>Give every AI agent one MCP endpoint for your MCP, OpenAPI, and GraphQL integrations while keeping credentials and per-tool policies centralized on your own Unraid server.</Overview>
+  <Description>
+Executor is a self-hosted MCP gateway and integration layer for AI agents. Connect compatible clients to one Streamable HTTP endpoint at /mcp, then manage integrations, credentials, users, and allow/approval/block policies from the web console.
+
+The official single-container image includes the API, web console, authentication, QuickJS execution, and SQLite/libSQL persistence. No database or worker container is required.
+
+Before first start, set Web Base URL to the exact origin you will open in a browser. Keep Allow Local Network and Allow Stdio MCP disabled unless you understand and need the additional access they grant.
+  </Description>
+  <Beta>true</Beta>
+  <ExtraSearchTerms>MCP Model Context Protocol AI agents gateway proxy OpenAPI GraphQL Claude Codex Cursor self-hosted</ExtraSearchTerms>
+  <Category>AI: Tools:Utilities</Category>
+  <WebUI>http://[IP]:[PORT:4788]/</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/ntindle/executor-unraid/main/templates/executor.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/ntindle/executor-unraid/main/images/executor.png</Icon>
+
+  <ExtraParams>--restart=unless-stopped --log-driver json-file --log-opt max-size=10m --log-opt max-file=3</ExtraParams>
+  <PostArgs/>
+  <CPUset/>
+
+  <Requires>This is an unofficial Community Applications template for the official Executor image. Set Web Base URL to the exact scheme, hostname or IP, and host port used in the browser; authentication and generated links depend on it. The first account created becomes the owner, then open signup closes and additional users require single-use invites. The App Data path contains the SQLite database, encrypted integration credentials, and generated encryption/session keys; preserve and back it up. Keep the service on a trusted LAN or VPN, or place it behind an authenticated TLS reverse proxy before remote exposure. Allow Local Network controls sandboxed outbound access to private addresses and is intentionally disabled by default. The distroless image has no interactive container shell; use Logs for troubleshooting. Support: https://github.com/ntindle/executor-unraid/issues</Requires>
+
+  <Changes>
+    ### 2026-09-04
+    - Initial Unraid template
+    - Track the official stable latest channel so Unraid application updates work
+    - Persist /data and require an explicit browser origin
+    - Keep private-network and host-command access disabled by default
+  </Changes>
+
+  <Config Name="Web UI and MCP Port" Target="4788" Default="4788" Mode="tcp" Description="Host TCP port mapped to container port 4788. The MCP endpoint is /mcp." Type="Port" Display="always" Required="true" Mask="false">4788</Config>
+  <Config Name="App Data" Target="/data" Default="/mnt/user/appdata/executor" Mode="rw" Description="Persistent database, encrypted credentials, and generated encryption/session keys. Include this path in backups." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/executor</Config>
+  <Config Name="Web Base URL" Target="EXECUTOR_WEB_BASE_URL" Default="" Mode="" Description="Exact browser origin, including scheme and non-default port; for example https://executor.example.com or http://192.168.1.10:4788. This is also used for OAuth callbacks and generated links." Type="Variable" Display="always" Required="true" Mask="false"></Config>
+  <Config Name="Additional Trusted Origins" Target="EXECUTOR_TRUSTED_ORIGINS" Default="" Mode="" Description="Optional comma-separated exact browser origins allowed in addition to Web Base URL. These aliases do not change OAuth callbacks or generated links." Type="Variable" Display="advanced" Required="false" Mask="false"></Config>
+  <Config Name="Allow Local Network" Target="EXECUTOR_ALLOW_LOCAL_NETWORK" Default="false|true" Mode="" Description="Allow sandboxed code to reach loopback and private-network addresses. Keep false unless agents must call trusted LAN services and the policy implications are understood." Type="Variable" Display="always" Required="true" Mask="false">false</Config>
+  <Config Name="Allow Stdio MCP" Target="EXECUTOR_ALLOW_STDIO_MCP" Default="false|true" Mode="" Description="Allow users to configure stdio MCP commands that execute inside this container. Leave false for a remote-gateway deployment." Type="Variable" Display="advanced" Required="true" Mask="false">false</Config>
+  <Config Name="Disable Anonymous Analytics" Target="EXECUTOR_DISABLE_ANALYTICS" Default="false|true" Mode="" Description="Set true to disable Executor's anonymous self-host usage events. This does not disable the integrations catalog fetch or crash reporting." Type="Variable" Display="advanced" Required="true" Mask="false">false</Config>
+</Container>

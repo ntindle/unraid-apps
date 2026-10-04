@@ -1,0 +1,112 @@
+name: Upstream
+
+# Watches the upstream releases this repository pins and proposes each new one as a pull
+# request, so its smoke test runs before anything is installed. Nothing is applied to a server:
+# merging publishes a new launcher image, and installs pick it up only through Unraid.
+#
+# Supermemory: a new supermemory-server release becomes a pull request that moves the image's
+# default version, the template's Server Version and the pinned SHA-256.
+#
+# CLIProxyAPI syncs in its own fork (ntindle/CLIProxyAPI, fork-sync-upstream.yml) and Executor
+# runs the upstream image unchanged; CI's daily run smoke-tests that image.
+
+on:
+  schedule:
+    - cron: "41 11 * * *"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: supermemory-server version to propose. Defaults to the latest stable release.
+        required: false
+        type: string
+
+concurrency:
+  group: upstream
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  supermemory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Find the release to propose
+        id: release
+        env:
+          REQUESTED: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          current="$(sed -n 's/^ENV SUPERMEMORY_VERSION=\([^ ]*\).*/\1/p' supermemory/Dockerfile)"
+          if [[ -n "${REQUESTED:-}" ]]; then
+            latest="${REQUESTED}"
+          else
+            # Stable server releases only: server-vX.Y.Z, not drafts or release candidates.
+            latest="$(gh api --paginate repos/supermemoryai/supermemory/releases \
+              --jq '.[] | select(.draft == false and .prerelease == false) | .tag_name' \
+              | sed -n 's/^server-v\([0-9]*\.[0-9]*\.[0-9]*\)$/\1/p' | sort -V | tail -n 1)"
+          fi
+          [[ -n "${latest}" ]] || { echo "::error::found no stable supermemory-server release"; exit 1; }
+          echo "current=${current}" >> "${GITHUB_OUTPUT}"
+          echo "latest=${latest}" >> "${GITHUB_OUTPUT}"
+          branch="upstream/supermemory-server-${latest}"
+          echo "branch=${branch}" >> "${GITHUB_OUTPUT}"
+          if [[ "${latest}" == "${current}" ]] \
+            || [[ -z "${REQUESTED:-}" && "$(printf '%s\n%s\n' "${current}" "${latest}" | sort -V | tail -n 1)" == "${current}" ]]; then
+            echo "propose=false" >> "${GITHUB_OUTPUT}"
+            echo "supermemory-server ${current} is the latest stable release." >> "${GITHUB_STEP_SUMMARY}"
+          elif git ls-remote --exit-code --heads origin "${branch}" >/dev/null \
+            || [[ -z "${REQUESTED:-}" && "$(gh pr list --head "${branch}" --state all --json number --jq length)" != "0" ]]; then
+            # Proposed already. A closed pull request means the release was declined, so the
+            # schedule does not ask again; a manual run with that version does.
+            echo "propose=false" >> "${GITHUB_OUTPUT}"
+            echo "supermemory-server ${latest} is already proposed or was declined on \`${branch}\`." >> "${GITHUB_STEP_SUMMARY}"
+          else
+            echo "propose=true" >> "${GITHUB_OUTPUT}"
+          fi
+      - name: Install validation tools
+        if: steps.release.outputs.propose == 'true'
+        run: sudo apt-get update && sudo apt-get install --yes libxml2-utils file
+      - name: Move the pin and validate
+        if: steps.release.outputs.propose == 'true'
+        run: |
+          set -euo pipefail
+          scripts/bump-supermemory.sh "${{ steps.release.outputs.latest }}"
+          scripts/validate.sh
+      - name: Open the pull request and run its checks
+        if: steps.release.outputs.propose == 'true'
+        env:
+          CURRENT: ${{ steps.release.outputs.current }}
+          LATEST: ${{ steps.release.outputs.latest }}
+          BRANCH: ${{ steps.release.outputs.branch }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch --create "${BRANCH}"
+          git commit --quiet --all -m "feat(supermemory): move to supermemory-server ${LATEST}"
+          git push --quiet origin "${BRANCH}"
+          body="$(mktemp)"
+          cat > "${body}" <<EOF
+          Supermemory published [supermemory-server ${LATEST}](https://github.com/supermemoryai/supermemory/releases/tag/server-v${LATEST}); this repository pins ${CURRENT}.
+
+          This moves the launcher image's default version, the template's **Server Version** and the pinned SHA-256 (from the release's \`manifest.json\`). The smoke test boots the new server; its run is started on this branch, because a pull request opened by Actions starts no checks by itself.
+
+          **Applying it on a server** is manual:
+
+          1. Back up App Data. An older server may not read a database a newer one has written.
+          2. Stop the container with a long timeout so the in-memory database is saved: \`docker stop -t 120 Supermemory\`.
+          3. Docker → Supermemory → Edit, set **Server Version** to \`${LATEST}\` and Apply. An installed container keeps the version in its own template, so a new launcher image alone does not change the server.
+          EOF
+          gh pr create --base main --head "${BRANCH}" \
+            --title "Move Supermemory to supermemory-server ${LATEST}" --body-file "${body}"
+          gh workflow run ci.yml --ref "${BRANCH}"
+          echo "Proposed supermemory-server ${LATEST} on \`${BRANCH}\`." >> "${GITHUB_STEP_SUMMARY}"

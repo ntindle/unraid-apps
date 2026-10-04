@@ -1,18 +1,38 @@
 #!/usr/bin/env bash
+# Boots the image named in the template the way the template runs it, as the template's user on
+# an App Data directory owned the way Unraid creates one, and checks the container contract:
+# health, the generated keys, a clean stop, and that the keys survive the container being
+# recreated.
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 template="${repo_root}/templates/executor.xml"
 image="${EXECUTOR_SMOKE_IMAGE:-$(xmllint --xpath 'string(/Container/Repository)' "${template}")}"
+run_as="$(xmllint --xpath 'string(/Container/ExtraParams)' "${template}" | sed -n 's/.*--user \([^ ]*\).*/\1/p')"
 host_port="${EXECUTOR_SMOKE_PORT:-14788}"
 container="executor-smoke-${GITHUB_RUN_ID:-$$}"
-data_dir="$(mktemp -d)"
+work_dir="$(mktemp -d)"
+data_dir="${work_dir}/data"
+mkdir "${data_dir}"
+
+# The image has no shell, so files the container owns are handled with its bun, as root.
+as_root() {
+  docker run --rm --user 0:0 --volume "${data_dir}:/data" --entrypoint bun "${image}" -e "$1"
+}
 
 cleanup() {
   docker rm --force "${container}" >/dev/null 2>&1 || true
-  rm -rf -- "${data_dir}"
+  as_root 'const fs = require("node:fs"); for (const name of fs.readdirSync("/data")) fs.rmSync("/data/" + name, { recursive: true, force: true })' >/dev/null 2>&1 || true
+  rm -rf -- "${work_dir}" 2>/dev/null || true
 }
 trap cleanup EXIT
+
+[[ "${run_as}" =~ ^[0-9]+:[0-9]+$ ]] || {
+  echo "templates/executor.xml must set --user <uid>:<gid> in ExtraParams, got '${run_as}'" >&2
+  exit 1
+}
+# Unraid creates a missing App Data path owned by 99:100 with mode 0755.
+as_root "const fs = require('node:fs'); fs.chownSync('/data', ${run_as%%:*}, ${run_as##*:}); fs.chmodSync('/data', 0o755)"
 
 assert_equal() {
   local actual="$1"
@@ -51,6 +71,7 @@ start_container() {
   docker run --detach \
     --name "${container}" \
     --restart=no \
+    --user "${run_as}" \
     --publish "127.0.0.1:${host_port}:4788" \
     --volume "${data_dir}:/data" \
     --env "EXECUTOR_WEB_BASE_URL=http://127.0.0.1:${host_port}" \
@@ -81,12 +102,15 @@ start_container
 wait_for_health
 
 assert_equal "$(docker inspect --format '{{.HostConfig.Privileged}}' "${container}")" "false" "privileged mode"
+assert_equal "$(docker inspect --format '{{.Config.User}}' "${container}")" "${run_as}" "container user"
 assert_equal "$(docker inspect --format '{{.HostConfig.NetworkMode}}' "${container}")" "bridge" "network mode"
 assert_equal "$(docker inspect --format '{{(index .NetworkSettings.Ports "4788/tcp" 0).HostIp}}' "${container}")" "127.0.0.1" "published host IP"
 assert_equal "$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/data"}}{{.RW}}{{end}}{{end}}' "${container}")" "true" "data mount read/write mode"
 require_container_file "/data/data.db"
 require_container_file "/data/secret.key"
 require_container_file "/data/auth-secret.key"
+
+assert_equal "$(docker exec "${container}" bun -e 'const s = require("node:fs").statSync("/data/secret.key"); console.log(s.uid + ":" + s.gid)')" "${run_as}" "secret.key owner"
 
 secret_sha="$(container_file_sha "/data/secret.key")"
 auth_sha="$(container_file_sha "/data/auth-secret.key")"

@@ -21,6 +21,7 @@ Executor, and it is not affiliated with or endorsed by Useful Software Co.
 - Persistent state: `/data`, mapped to `/mnt/user/appdata/executor`
 - Network mode: bridge
 - Privileged mode: disabled
+- Runs as user `99:100`, which owns App Data on Unraid
 - Private-network access from sandboxed code: disabled by default
 - Stdio MCP command execution: disabled by default
 
@@ -49,7 +50,7 @@ contract manually:
 | Port | host `4788` to container `4788/tcp` |
 | App Data | `/mnt/user/appdata/executor` to `/data`, read/write |
 | Web Base URL | exact browser origin as `EXECUTOR_WEB_BASE_URL` |
-| Extra Parameters | `--restart=unless-stopped --log-driver json-file --log-opt max-size=10m --log-opt max-file=3` |
+| Extra Parameters | `--restart=unless-stopped --user 99:100 --log-driver json-file --log-opt max-size=10m --log-opt max-file=3` |
 
 The canonical template remains available for review at
 [`templates/executor.xml`](../templates/executor.xml). Current Unraid 7.2 Docker
@@ -119,6 +120,20 @@ last validated release and digest are recorded in
 Automatic application is still opt-in through your Unraid update policy. Run
 the appdata backup before the container-update window so the database and both
 generated key files are recoverable together.
+
+### Upgrading from Executor 1.6.8 or earlier
+
+Since 1.6.10 the image runs as a non-root user, and the template runs it as
+`99:100`, the owner Unraid gives App Data. Data written by 1.6.8 or earlier
+belongs to root, so the new image cannot open its key files and stops with
+`EACCES: permission denied, open '/data/secret.key'`. Stop the container, back
+up the appdata directory, then fix the ownership from the Unraid terminal:
+
+```bash
+chown -R 99:100 /mnt/user/appdata/executor
+```
+
+The image has no shell, so this cannot be done from inside the container.
 
 ## Support and provenance
 

@@ -27,15 +27,17 @@ Before first start, set Web Base URL to the exact origin you will open in a brow
   <TemplateURL>https://raw.githubusercontent.com/ntindle/unraid-apps/main/templates/executor.xml</TemplateURL>
   <Icon>https://raw.githubusercontent.com/ntindle/unraid-apps/main/images/executor.png</Icon>
 
-  <ExtraParams>--restart=unless-stopped --log-driver json-file --log-opt max-size=10m --log-opt max-file=3</ExtraParams>
+  <ExtraParams>--restart=unless-stopped --user 99:100 --log-driver json-file --log-opt max-size=10m --log-opt max-file=3</ExtraParams>
   <PostArgs/>
   <CPUset/>
 
-  <Requires>This is an unofficial Community Applications template for the official Executor image. Set Web Base URL to the exact scheme, hostname or IP, and host port used in the browser; authentication and generated links depend on it. The first account created becomes the owner, then open signup closes and additional users require single-use invites. The App Data path contains the SQLite database, encrypted integration credentials, and generated encryption/session keys; preserve and back it up. Keep the service on a trusted LAN or VPN, or place it behind an authenticated TLS reverse proxy before remote exposure. Allow Local Network controls sandboxed outbound access to private addresses and is intentionally disabled by default. The distroless image has no interactive container shell; use Logs for troubleshooting. Support: https://github.com/ntindle/unraid-apps/issues</Requires>
+  <Requires>This is an unofficial Community Applications template for the official Executor image. Set Web Base URL to the exact scheme, hostname or IP, and host port used in the browser; authentication and generated links depend on it. The first account created becomes the owner, then open signup closes and additional users require single-use invites. The App Data path contains the SQLite database, encrypted integration credentials, and generated encryption/session keys; preserve and back it up. The container runs as user 99:100, which owns App Data on Unraid; App Data written by Executor 1.6.8 or earlier belongs to root, so back it up and run chown -R 99:100 on it before starting a newer image. Keep the service on a trusted LAN or VPN, or place it behind an authenticated TLS reverse proxy before remote exposure. Allow Local Network controls sandboxed outbound access to private addresses and is intentionally disabled by default. The distroless image has no interactive container shell; use Logs for troubleshooting. Support: https://github.com/ntindle/unraid-apps/issues</Requires>
 
   <Changes>
     ### 2026-10-04
-    - Moved to https://github.com/ntindle/unraid-apps with the other templates; no change to the container
+    - Moved to https://github.com/ntindle/unraid-apps with the other templates
+    - Run the container as 99:100. Since 1.6.10 the image runs as a non-root user and could not write an App Data path created by Unraid
+    - App Data from Executor 1.6.8 or earlier is owned by root: back it up and run chown -R 99:100 on it before upgrading
 
     ### 2026-09-04
     - Initial Unraid template

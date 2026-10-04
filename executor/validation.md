@@ -1,5 +1,31 @@
 # Validation record
 
+## Non-root image — 2026-10-04
+
+Upstream PR [#2000](https://github.com/UsefulSoftwareCo/executor/pull/2000)
+(merged 2026-09-15) moved the runtime to `distroless:nonroot` with
+`USER 65532:65532`; only the image's own `/data` belongs to that user. No
+`1.6.9` image was published, so the first image with the change is `1.6.10`,
+which became `latest` on 2026-09-18:
+
+- Upstream version `1.6.10`, revision
+  `3890d6f5e5efd1530f0dba0fe23ada95a39caf86`, multi-platform digest
+  `sha256:b9e001775d3eb7d662d347c8f7054333c78c1a4fd97cb5a86dc1d1d1406093b9`
+- Image user `65532:65532`; `1.6.8`
+  (`sha256:200315d519a8c19685de05e88aa9a3cf1e1cb9869a2b0aecf604f6ebf47c6ea1`)
+  ran as root
+
+With a bind-mounted data directory the container cannot write, the first start
+fails with `EACCES: permission denied, open '/data/secret.key'`. That is what
+Unraid gives it: dockerMan creates a missing App Data path owned by `99:100`
+with mode `0755`. The daily smoke test failed this way from 2026-09-19.
+
+The template now runs the container as `99:100`. The smoke test creates its
+data directory the way Unraid does, runs the image as the template's `--user`,
+and checks that the generated keys belong to that user. Data written by `1.6.8`
+or earlier is owned by root and needs `chown -R 99:100` before the first start
+of a newer image.
+
 ## Initial contract review — 2026-09-04
 
 The initial template was derived from the upstream `v1.6.7` release and the

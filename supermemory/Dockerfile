@@ -12,7 +12,7 @@ RUN apt-get update \
 COPY checksums.txt /usr/local/share/supermemory/checksums.txt
 COPY --chmod=0755 entrypoint.sh /usr/local/bin/entrypoint.sh
 
-ENV SUPERMEMORY_VERSION=0.0.8 \
+ENV SUPERMEMORY_VERSION=0.0.7 \
     PORT=6767 \
     PUID=99 \
     PGID=100 \

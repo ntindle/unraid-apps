@@ -48,7 +48,7 @@ new image only when **apply update** is pressed on Unraid's Docker tab.
 | --- | --- | --- |
 | CLIProxyAPI | [router-for-me/CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI) releases | The [fork](https://github.com/ntindle/CLIProxyAPI) merges the latest release weekly, checks it and publishes `:latest`; a conflict opens an issue there |
 | Executor | the official image's `:latest` | Unraid sees each new digest directly; CI's daily run smoke-tests it |
-| Supermemory | [supermemory-server releases](https://github.com/supermemoryai/supermemory/releases) | The daily [Upstream](.github/workflows/upstream.yml) workflow opens a pull request for a new stable release and starts its smoke test; `scripts/bump-supermemory.sh <version>` does the same change by hand |
+| Supermemory | [supermemory-server releases](https://github.com/supermemoryai/supermemory/releases) | The daily [Upstream](.github/workflows/upstream.yml) workflow boots each new stable release in the smoke test and opens a pull request with the result; `scripts/bump-supermemory.sh <version>` does the same change by hand |
 
 An installed Supermemory keeps its **Server Version** in its own template, so a merged version
 change reaches it only when that field is edited; see

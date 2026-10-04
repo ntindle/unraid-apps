@@ -5,7 +5,10 @@ name: Upstream
 # merging publishes a new launcher image, and installs pick it up only through Unraid.
 #
 # Supermemory: a new supermemory-server release becomes a pull request that moves the image's
-# default version, the template's Server Version and the pinned SHA-256.
+# default version, the template's Server Version and the pinned SHA-256. The smoke test boots
+# the new server here first, and its result is set on the commit as the check
+# "upstream / supermemory-smoke", because a pull request opened by Actions starts no CI
+# (GitHub holds its pull_request run for approval).
 #
 # CLIProxyAPI syncs in its own fork (ntindle/CLIProxyAPI, fork-sync-upstream.yml) and Executor
 # runs the upstream image unchanged; CI's daily run smoke-tests that image.
@@ -30,11 +33,11 @@ permissions:
 jobs:
   supermemory:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     permissions:
       contents: write
       pull-requests: write
-      actions: write
+      statuses: write
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
@@ -81,24 +84,44 @@ jobs:
           set -euo pipefail
           scripts/bump-supermemory.sh "${{ steps.release.outputs.latest }}"
           scripts/validate.sh
-      - name: Open the pull request and run its checks
+      # A release that fails the smoke test is still proposed, marked failing, so it is known.
+      - name: Boot the new server
+        id: smoke
+        if: steps.release.outputs.propose == 'true'
+        continue-on-error: true
+        run: scripts/smoke-test-supermemory.sh
+      - name: Open the pull request
         if: steps.release.outputs.propose == 'true'
         env:
           CURRENT: ${{ steps.release.outputs.current }}
           LATEST: ${{ steps.release.outputs.latest }}
           BRANCH: ${{ steps.release.outputs.branch }}
+          SMOKE: ${{ steps.smoke.outcome }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
+          if [[ "${SMOKE}" == "success" ]]; then
+            state=success
+            result="The smoke test booted supermemory-server ${LATEST} in [this run](${RUN_URL}) and passed."
+          else
+            state=failure
+            result="**The smoke test failed** for supermemory-server ${LATEST} in [this run](${RUN_URL}); do not merge until that is understood."
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch --create "${BRANCH}"
           git commit --quiet --all -m "feat(supermemory): move to supermemory-server ${LATEST}"
           git push --quiet origin "${BRANCH}"
+          gh api --silent "repos/${GITHUB_REPOSITORY}/statuses/$(git rev-parse HEAD)" \
+            -f state="${state}" -f context="upstream / supermemory-smoke" \
+            -f description="supermemory-server ${LATEST} smoke test: ${state}" -f target_url="${RUN_URL}"
           body="$(mktemp)"
           cat > "${body}" <<EOF
           Supermemory published [supermemory-server ${LATEST}](https://github.com/supermemoryai/supermemory/releases/tag/server-v${LATEST}); this repository pins ${CURRENT}.
 
-          This moves the launcher image's default version, the template's **Server Version** and the pinned SHA-256 (from the release's \`manifest.json\`). The smoke test boots the new server; its run is started on this branch, because a pull request opened by Actions starts no checks by itself.
+          This moves the launcher image's default version, the template's **Server Version** and the pinned SHA-256 (from the release's \`manifest.json\`).
+
+          ${result} The rest of CI is held by GitHub for approval, as for every pull request opened by Actions; approve it under Checks to run it.
 
           **Applying it on a server** is manual:
 
@@ -108,5 +131,4 @@ jobs:
           EOF
           gh pr create --base main --head "${BRANCH}" \
             --title "Move Supermemory to supermemory-server ${LATEST}" --body-file "${body}"
-          gh workflow run ci.yml --ref "${BRANCH}"
-          echo "Proposed supermemory-server ${LATEST} on \`${BRANCH}\`." >> "${GITHUB_STEP_SUMMARY}"
+          echo "Proposed supermemory-server ${LATEST} on \`${BRANCH}\`; smoke test ${state}." >> "${GITHUB_STEP_SUMMARY}"

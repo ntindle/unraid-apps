@@ -73,10 +73,8 @@ expect "supermemory guard value" "$(value '/Container/Config[@Name="Host Guard"]
 template_version="$(value '/Container/Config[@Name="Server Version"]')"
 image_version="$(sed -n 's/^ENV SUPERMEMORY_VERSION=\([^ ]*\).*/\1/p' "${repo_root}/supermemory/Dockerfile")"
 expect "supermemory version" "${template_version}" "${image_version}"
-for platform in linux-x64; do
-  grep -Eq "^${template_version//./\\.} ${platform} [0-9a-f]{64}\$" "${repo_root}/supermemory/checksums.txt" \
-    || fail "supermemory/checksums.txt does not pin ${template_version} ${platform}"
-done
+grep -Eq "^${template_version//./\\.} linux-x64 [0-9a-f]{64}\$" "${repo_root}/supermemory/checksums.txt" \
+  || fail "supermemory/checksums.txt does not pin ${template_version} linux-x64"
 
 # The published files must not carry a placeholder, a host-specific address or a secret.
 if grep -R -n -I -E "REPLACE_WITH_|change-me|sk-[a-z]+-[0-9a-f]{8}|sm_[A-Za-z0-9]{20}|\.ts\.net|192\.168\.[0-9]+\.[0-9]{2,3}|BEGIN (RSA|OPENSSH|EC) PRIVATE KEY" \

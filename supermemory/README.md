@@ -113,8 +113,6 @@ memory. With the password empty, nothing listens on `6769`.
 - It has one API key and one organization. Separate clients by container tag.
 - It has no connectors (Google Drive, Notion, Gmail, OneDrive) and no MCP endpoint. The extra
   search tools some plugins reach through Supermemory's hosted MCP server are not available.
-- The console's container-tag list calls a route the server does not serve, so it shows no
-  tags.
 
 ## Host guard
 

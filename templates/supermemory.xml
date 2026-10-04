@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Container version="2">
+  <Name>Supermemory</Name>
+  <Repository>ghcr.io/ntindle/unraid-apps/supermemory:latest</Repository>
+  <Registry>https://github.com/ntindle/unraid-apps/pkgs/container/unraid-apps%2Fsupermemory</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>bash</Shell>
+  <Privileged>false</Privileged>
+
+  <Support>https://github.com/ntindle/unraid-apps/issues</Support>
+  <Project>https://supermemory.ai/docs/self-hosting/overview</Project>
+  <ReadMe>https://raw.githubusercontent.com/ntindle/unraid-apps/main/supermemory/README.md</ReadMe>
+
+  <Overview>One memory store on your own server for your coding agents: Claude Code, Codex, OpenCode, OpenClaw, Hermes and anything else that speaks the Supermemory API can save what they learn to it and recall it later.</Overview>
+  <Description>
+Runs Supermemory's self-hosted server (supermemory-server, the "lite" build). It serves the Supermemory memory API and hybrid search on one port and keeps its database, embedding model and API key in the App Data path.
+
+The server binary is not in the image. The first start downloads the release named by Server Version from Supermemory's GitHub releases into App Data (about 300 MB) and checks its SHA-256; later starts reuse it.
+
+Set one LLM provider before the first start: an OpenAI key, an OpenAI-compatible endpoint (LLM Base URL plus a key and a model), an Anthropic key or a Gemini key. The server uses it to extract memories from what clients send. After the container is healthy, read the API key from the container log or from store/api-key in App Data and give it to your clients.
+  </Description>
+  <Beta>true</Beta>
+  <ExtraSearchTerms>memory agent Claude Code Codex OpenCode OpenClaw Hermes RAG vector search AI assistant context</ExtraSearchTerms>
+  <Category>AI: Productivity: Tools:Utilities</Category>
+  <WebUI/>
+  <TemplateURL>https://raw.githubusercontent.com/ntindle/unraid-apps/main/templates/supermemory.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/ntindle/unraid-apps/main/images/supermemory.png</Icon>
+
+  <ExtraParams>--restart=unless-stopped --stop-timeout=120 --log-driver json-file --log-opt max-size=10m --log-opt max-file=3</ExtraParams>
+  <PostArgs/>
+  <CPUset/>
+
+  <Requires>Unofficial template; not affiliated with Supermemory. The container needs internet access on its first start to download the server and the embedding model. An LLM provider is required. The server's own license notice limits this build to 10,000 documents. It has no connectors and no MCP endpoint. The App Data path holds every stored memory and the API key; treat it as a secret and back it up. Keep the port on a trusted LAN or a VPN such as Tailscale; do not expose it to the internet. Support: https://github.com/ntindle/unraid-apps/issues</Requires>
+
+  <Config Name="API Port" Target="6767" Default="6767" Mode="tcp" Description="Host TCP port mapped to container port 6767. Clients use http://[IP]:[PORT] as their Supermemory base URL." Type="Port" Display="always" Required="true" Mask="false">6767</Config>
+  <Config Name="App Data" Target="/data" Default="/mnt/user/appdata/supermemory" Mode="rw" Description="Persistent state: the downloaded server (bin), the database, embedding model and API key (store). Contains every stored memory; include it in backups." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/supermemory</Config>
+  <Config Name="LLM API Key" Target="OPENAI_API_KEY" Default="" Mode="" Description="Key for OpenAI, or for the OpenAI-compatible endpoint in LLM Base URL. Leave empty if you set an Anthropic or Gemini key instead." Type="Variable" Display="always" Required="false" Mask="true"></Config>
+  <Config Name="LLM Base URL" Target="OPENAI_BASE_URL" Default="" Mode="" Description="Leave empty for OpenAI. For an OpenAI-compatible endpoint (a proxy, Ollama, LM Studio, vLLM, OpenRouter) enter its /v1 address. The endpoint must serve /chat/completions with tool calls." Type="Variable" Display="always" Required="false" Mask="false"></Config>
+  <Config Name="LLM Model" Target="OPENAI_MODEL" Default="" Mode="" Description="Model the OpenAI or OpenAI-compatible provider runs. Leave empty for the server's default OpenAI model; required for an OpenAI-compatible endpoint." Type="Variable" Display="always" Required="false" Mask="false"></Config>
+  <Config Name="Anthropic API Key" Target="ANTHROPIC_API_KEY" Default="" Mode="" Description="Use Anthropic as the LLM provider instead." Type="Variable" Display="advanced" Required="false" Mask="true"></Config>
+  <Config Name="Gemini API Key" Target="GEMINI_API_KEY" Default="" Mode="" Description="Use Gemini as the LLM provider. Also the only key that lets the server read images, video and scanned PDFs." Type="Variable" Display="advanced" Required="false" Mask="true"></Config>
+  <Config Name="Server Version" Target="SUPERMEMORY_VERSION" Default="0.0.8" Mode="" Description="supermemory-server release to run. Changing it downloads that release on the next start. Back up App Data first: an older server may not read a newer database." Type="Variable" Display="advanced" Required="false" Mask="false">0.0.8</Config>
+  <Config Name="Disable Telemetry" Target="SUPERMEMORY_DISABLE_TELEMETRY" Default="1|0" Mode="" Description="1 turns the server's telemetry off." Type="Variable" Display="advanced" Required="false" Mask="false">1</Config>
+  <Config Name="Host Guard" Target="SUPERMEMORY_HOST_GUARD" Default="on|off" Mode="" Description="On: every API request needs the API key. Off: the server's own behaviour, where a request that sends a loopback Host header skips the key; only for a port no other machine can reach." Type="Variable" Display="advanced" Required="false" Mask="false">on</Config>
+  <Config Name="User ID" Target="PUID" Default="99" Mode="" Description="User the server runs as and that owns App Data." Type="Variable" Display="advanced" Required="false" Mask="false">99</Config>
+  <Config Name="Group ID" Target="PGID" Default="100" Mode="" Description="Group the server runs as and that owns App Data." Type="Variable" Display="advanced" Required="false" Mask="false">100</Config>
+</Container>

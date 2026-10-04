@@ -1,0 +1,99 @@
+name: CI
+
+# Validates every template, smoke-tests each launcher image, and publishes an image to GHCR
+# when its source changed on main.
+#   latest                          moves with every build; this is the tag Unraid tracks
+#   <server version>-<short commit> immutable, for rollback
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install validation tools
+        run: sudo apt-get update && sudo apt-get install --yes libxml2-utils file shellcheck
+      - name: Validate templates, profile and icons
+        run: scripts/validate.sh
+      - name: Lint shell
+        run: shellcheck scripts/*.sh supermemory/entrypoint.sh
+
+  supermemory-smoke:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Boot the launcher image and verify the container contract
+        run: scripts/smoke-test-supermemory.sh
+
+  supermemory-image:
+    needs: supermemory-smoke
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Decide whether the image source changed
+        id: changed
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]] \
+            || [[ -z "${BEFORE}" || "${BEFORE}" =~ ^0+$ ]] \
+            || ! git cat-file -e "${BEFORE}^{commit}" 2>/dev/null \
+            || ! git diff --quiet "${BEFORE}" "${GITHUB_SHA}" -- supermemory/Dockerfile supermemory/entrypoint.sh supermemory/checksums.txt; then
+            echo "build=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "build=false" >> "${GITHUB_OUTPUT}"
+            echo "The launcher source did not change; keeping the published image." >> "${GITHUB_STEP_SUMMARY}"
+          fi
+      - name: Set up Docker Buildx
+        if: steps.changed.outputs.build == 'true'
+        uses: docker/setup-buildx-action@v3
+      - name: Log in to GHCR
+        if: steps.changed.outputs.build == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push
+        if: steps.changed.outputs.build == 'true'
+        run: |
+          set -euo pipefail
+          version="$(sed -n 's/^ENV SUPERMEMORY_VERSION=\([^ ]*\).*/\1/p' supermemory/Dockerfile)"
+          image="ghcr.io/${GITHUB_REPOSITORY,,}/supermemory"
+          commit="${GITHUB_SHA::7}"
+          docker buildx build \
+            --platform linux/amd64 \
+            --label "org.opencontainers.image.source=https://github.com/${GITHUB_REPOSITORY}" \
+            --label "org.opencontainers.image.revision=${GITHUB_SHA}" \
+            --label "org.opencontainers.image.description=Launcher for Supermemory's self-hosted server on Unraid" \
+            --tag "${image}:latest" \
+            --tag "${image}:${version}-${commit}" \
+            --push supermemory
+          {
+            echo "### Published"
+            echo ""
+            echo "- \`${image}:latest\`"
+            echo "- \`${image}:${version}-${commit}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"

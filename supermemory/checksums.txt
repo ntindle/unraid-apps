@@ -1,0 +1,5 @@
+# SHA-256 of supermemory-server release binaries this image has pinned.
+# Source: manifest.json of each server-v<version> release of supermemoryai/supermemory.
+# <version> <platform> <sha256>
+0.0.8 linux-x64 87f32433d0179be80bb9d8a1bafbac65af4128324342a27ecb8bd1a77b5506f3
+0.0.8 linux-arm64 eeb9e62a8bf59646bd799a05d1a2981b945413a03640c3a39f4f267ad2d2bf37

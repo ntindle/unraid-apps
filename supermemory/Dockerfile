@@ -19,7 +19,7 @@ ENV SUPERMEMORY_VERSION=0.0.8 \
     SUPERMEMORY_HOST_GUARD=on
 
 VOLUME /data
-EXPOSE 6767
+EXPOSE 6767 6769
 
 # The first start downloads the server (about 300 MB) before it listens.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10m --retries=3 \

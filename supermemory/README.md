@@ -11,6 +11,7 @@ them back through the Supermemory API.
 
 - Image: `ghcr.io/ntindle/unraid-apps/supermemory:latest`
 - Port `6767`: the Supermemory API
+- Port `6769`: the web console, only when **Console Password** is set
 - Persistent state: `/data`, mapped to `/mnt/user/appdata/supermemory`
 - Network mode: bridge. Privileged mode: off.
 
@@ -96,14 +97,24 @@ curl http://<server-ip>:6767/v4/search \
 A document moves through `queued`, `extracting`, `chunking`, `embedding` and `indexing` before
 it is `done`, which takes one to two minutes.
 
+## Web console
+
+The server ships a web console at `/#memory` that lists documents and draws the memory graph.
+It sends no API key, so it only works for requests the server treats as local.
+
+Set **Console Password** to turn on port `6769`. It asks for user `admin` and that password,
+then forwards to the server as a local request, so the console works from a browser and the
+**WebUI** button in Unraid opens it. Anyone who signs in can read and change every stored
+memory. With the password empty, nothing listens on `6769`.
+
 ## What this build does not do
 
 - The server's license notice limits it to 10,000 documents.
 - It has one API key and one organization. Separate clients by container tag.
 - It has no connectors (Google Drive, Notion, Gmail, OneDrive) and no MCP endpoint. The extra
   search tools some plugins reach through Supermemory's hosted MCP server are not available.
-- The web console on `/` only works for requests the server treats as local, so it does not
-  work through the host guard.
+- The console's container-tag list calls a route the server does not serve, so it shows no
+  tags.
 
 ## Host guard
 

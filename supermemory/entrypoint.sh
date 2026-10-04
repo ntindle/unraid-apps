@@ -88,6 +88,35 @@ if [[ "${SUPERMEMORY_HOST_GUARD:-on}" != "off" ]]; then
   guard_dir="/tmp/supermemory-guard"
   rm -rf "${guard_dir}"
   mkdir -p "${guard_dir}/tmp"
+
+  # The server's web console sends no API key and only works for loopback requests. With a
+  # console password set, a second port asks for that password and then forwards with a
+  # loopback Host, so the console works from a browser on the network.
+  console_server=""
+  console_port="${SUPERMEMORY_CONSOLE_PORT:-6769}"
+  if [[ -n "${SUPERMEMORY_CONSOLE_PASSWORD:-}" ]]; then
+    if ! port_ok "${console_port}" || [[ "${console_port}" == "${PORT}" || "${console_port}" == "${internal_port}" ]]; then
+      die "SUPERMEMORY_CONSOLE_PORT must be a TCP port other than PORT and SUPERMEMORY_INTERNAL_PORT, got '${console_port}'"
+    fi
+    printf 'admin:%s\n' "$(printf '%s' "${SUPERMEMORY_CONSOLE_PASSWORD}" | openssl passwd -apr1 -stdin)" >"${guard_dir}/console.htpasswd"
+    console_server="
+  server {
+    listen ${console_port};
+    auth_basic \"Supermemory console\";
+    auth_basic_user_file ${guard_dir}/console.htpasswd;
+    location / {
+      proxy_pass http://127.0.0.1:${internal_port};
+      proxy_http_version 1.1;
+      proxy_set_header Host localhost;
+      proxy_set_header Authorization \"\";
+      proxy_set_header Upgrade \$http_upgrade;
+      proxy_set_header Connection \$connection_upgrade;
+      proxy_buffering off;
+      proxy_read_timeout 3600s;
+    }
+  }"
+  fi
+
   cat >"${guard_dir}/nginx.conf" <<EOF
 worker_processes 1;
 pid ${guard_dir}/nginx.pid;
@@ -119,13 +148,18 @@ http {
       proxy_read_timeout 3600s;
       proxy_send_timeout 3600s;
     }
-  }
+  }${console_server}
 }
 EOF
   chown -R "${PUID}:${PGID}" "${guard_dir}"
   "${run_as[@]}" nginx -e stderr -c "${guard_dir}/nginx.conf" -t -q || die "the host guard configuration is invalid"
   "${run_as[@]}" nginx -e stderr -c "${guard_dir}/nginx.conf"
   log "host guard listening on port ${PORT}; the API key is required for every API request"
+  if [[ -n "${console_server}" ]]; then
+    log "web console on port ${console_port}, user admin, password from SUPERMEMORY_CONSOLE_PASSWORD"
+  else
+    log "web console is off; set SUPERMEMORY_CONSOLE_PASSWORD to turn it on"
+  fi
   export PORT="${internal_port}" SUPERMEMORY_PORT="${internal_port}"
 else
   log "host guard is off: requests that send a loopback Host header skip the API key"

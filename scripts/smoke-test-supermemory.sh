@@ -114,6 +114,21 @@ echo "ok: the downloaded server is reused"
   || fail "the API key changed when the container was recreated, so the database was not kept"
 echo "ok: the database and API key survive a recreate"
 
+# The console port asks for its password and then needs no API key.
+console_port="${SUPERMEMORY_SMOKE_CONSOLE_PORT:-16798}"
+console_base="http://127.0.0.1:${console_port}"
+start_container --publish "127.0.0.1:${console_port}:6769" --env SUPERMEMORY_CONSOLE_PASSWORD=smoke-console
+wait_healthy
+console_list() {
+  status --request POST "${console_base}/v3/documents/list" \
+    --header 'Content-Type: application/json' --data '{"page":1,"limit":1}' "$@"
+}
+assert_equal "$(console_list)" "401" "console without its password is rejected"
+assert_equal "$(console_list --user admin:wrong)" "401" "console with a wrong password is rejected"
+assert_equal "$(console_list --user admin:smoke-console)" "200" "console with its password needs no API key"
+assert_equal "$(status --user admin:smoke-console "${console_base}/")" "200" "console page loads"
+assert_equal "$(list_documents)" "401" "the API port still requires the key while the console is on"
+
 # With the guard off the image shows the server's own behaviour. If this starts failing after
 # a version bump, the server has stopped trusting the Host header and the guard can go.
 start_container --env SUPERMEMORY_HOST_GUARD=off

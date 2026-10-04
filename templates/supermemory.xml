@@ -18,12 +18,12 @@ Runs Supermemory's self-hosted server (supermemory-server, the "lite" build). It
 
 The server binary is not in the image. The first start downloads the release named by Server Version from Supermemory's GitHub releases into App Data (about 300 MB) and checks its SHA-256; later starts reuse it.
 
-Set one LLM provider before the first start: an OpenAI key, an OpenAI-compatible endpoint (LLM Base URL plus a key and a model), an Anthropic key or a Gemini key. The server uses it to extract memories from what clients send. After the container is healthy, read the API key from the container log or from store/api-key in App Data and give it to your clients.
+Set one LLM provider before the first start: an OpenAI key, an OpenAI-compatible endpoint (LLM Base URL plus a key and a model), an Anthropic key or a Gemini key. The server uses it to extract memories from what clients send. After the container is healthy, read the API key from store/api-key in App Data and give it to your clients. Set Console Password to open the server's web console from the WebUI button.
   </Description>
   <Beta>true</Beta>
   <ExtraSearchTerms>memory agent Claude Code Codex OpenCode OpenClaw Hermes RAG vector search AI assistant context</ExtraSearchTerms>
   <Category>AI: Productivity: Tools:Utilities</Category>
-  <WebUI/>
+  <WebUI>http://[IP]:[PORT:6769]/#memory</WebUI>
   <TemplateURL>https://raw.githubusercontent.com/ntindle/unraid-apps/main/templates/supermemory.xml</TemplateURL>
   <Icon>https://raw.githubusercontent.com/ntindle/unraid-apps/main/images/supermemory.png</Icon>
 
@@ -34,6 +34,8 @@ Set one LLM provider before the first start: an OpenAI key, an OpenAI-compatible
   <Requires>Unofficial template; not affiliated with Supermemory. The container needs internet access on its first start to download the server and the embedding model. An LLM provider is required. The server's own license notice limits this build to 10,000 documents. It has no connectors and no MCP endpoint. The App Data path holds every stored memory and the API key; treat it as a secret and back it up. Keep the port on a trusted LAN or a VPN such as Tailscale; do not expose it to the internet. Support: https://github.com/ntindle/unraid-apps/issues</Requires>
 
   <Config Name="API Port" Target="6767" Default="6767" Mode="tcp" Description="Host TCP port mapped to container port 6767. Clients use http://[IP]:[PORT] as their Supermemory base URL." Type="Port" Display="always" Required="true" Mask="false">6767</Config>
+  <Config Name="Console Port" Target="6769" Default="6769" Mode="tcp" Description="Host TCP port mapped to container port 6769: the server's web console, behind Console Password. Answers only when Console Password is set." Type="Port" Display="always" Required="false" Mask="false">6769</Config>
+  <Config Name="Console Password" Target="SUPERMEMORY_CONSOLE_PASSWORD" Default="" Mode="" Description="Password for the web console (user admin). Anyone who signs in can read and change every stored memory. Leave empty to keep the console off." Type="Variable" Display="always" Required="false" Mask="true"></Config>
   <Config Name="App Data" Target="/data" Default="/mnt/user/appdata/supermemory" Mode="rw" Description="Persistent state: the downloaded server (bin), the database, embedding model and API key (store). Contains every stored memory; include it in backups." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/supermemory</Config>
   <Config Name="LLM API Key" Target="OPENAI_API_KEY" Default="" Mode="" Description="Key for OpenAI, or for the OpenAI-compatible endpoint in LLM Base URL. Leave empty if you set an Anthropic or Gemini key instead." Type="Variable" Display="always" Required="false" Mask="true"></Config>
   <Config Name="LLM Base URL" Target="OPENAI_BASE_URL" Default="" Mode="" Description="Leave empty for OpenAI. For an OpenAI-compatible endpoint (a proxy, Ollama, LM Studio, vLLM, OpenRouter) enter its /v1 address. The endpoint must serve /chat/completions with tool calls." Type="Variable" Display="always" Required="false" Mask="false"></Config>

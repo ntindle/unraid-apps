@@ -5,7 +5,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 template="${repo_root}/templates/executor.xml"
 image="${EXECUTOR_SMOKE_IMAGE:-$(xmllint --xpath 'string(/Container/Repository)' "${template}")}"
 host_port="${EXECUTOR_SMOKE_PORT:-14788}"
-container="executor-unraid-smoke-${GITHUB_RUN_ID:-$$}"
+container="executor-smoke-${GITHUB_RUN_ID:-$$}"
 data_dir="$(mktemp -d)"
 
 cleanup() {

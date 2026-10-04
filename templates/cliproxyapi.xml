@@ -8,9 +8,9 @@
   <Shell>bash</Shell>
   <Privileged>false</Privileged>
 
-  <Support>https://github.com/ntindle/cliproxyapi-unraid/issues</Support>
+  <Support>https://github.com/ntindle/unraid-apps/issues</Support>
   <Project>https://github.com/ntindle/CLIProxyAPI</Project>
-  <ReadMe>https://raw.githubusercontent.com/ntindle/cliproxyapi-unraid/main/README.md</ReadMe>
+  <ReadMe>https://raw.githubusercontent.com/ntindle/unraid-apps/main/cliproxyapi/README.md</ReadMe>
   <License>MIT</License>
 
   <Overview>Put Claude Code and Codex behind one endpoint on your own server: sign your Claude and ChatGPT subscription accounts in once, and the proxy spreads requests across them, keeps each session on one account, and uses the quota that expires soonest first.</Overview>
@@ -25,14 +25,14 @@ Set Management Password before the first start. After the container is healthy, 
   <ExtraSearchTerms>Claude Code Codex ChatGPT Anthropic OpenAI proxy gateway subscription OAuth load balancer AI agents</ExtraSearchTerms>
   <Category>AI: Network:Proxy Tools:Utilities</Category>
   <WebUI>http://[IP]:[PORT:8317]/management.html</WebUI>
-  <TemplateURL>https://raw.githubusercontent.com/ntindle/cliproxyapi-unraid/main/templates/cliproxyapi.xml</TemplateURL>
-  <Icon>https://raw.githubusercontent.com/ntindle/cliproxyapi-unraid/main/images/cliproxyapi.png</Icon>
+  <TemplateURL>https://raw.githubusercontent.com/ntindle/unraid-apps/main/templates/cliproxyapi.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/ntindle/unraid-apps/main/images/cliproxyapi.png</Icon>
 
   <ExtraParams>--restart=unless-stopped --log-driver json-file --log-opt max-size=10m --log-opt max-file=3</ExtraParams>
   <PostArgs/>
   <CPUset/>
 
-  <Requires>Unofficial template for the ntindle fork of CLIProxyAPI. Set Management Password before the first start; without it the web console is disabled. The App Data path holds config.yaml, the OAuth credentials of every signed-in account, logs and plugins; treat it as a secret and back it up. Client API Keys are read only when config.yaml is first created; after that, manage keys in the web console. Keep the port on a trusted LAN or VPN such as Tailscale; do not expose it to the internet. Use only accounts you own, and check each provider's terms before routing a subscription through a proxy. Support: https://github.com/ntindle/cliproxyapi-unraid/issues</Requires>
+  <Requires>Unofficial template for the ntindle fork of CLIProxyAPI. Set Management Password before the first start; without it the web console is disabled. The App Data path holds config.yaml, the OAuth credentials of every signed-in account, logs and plugins; treat it as a secret and back it up. Client API Keys are read only when config.yaml is first created; after that, manage keys in the web console. Keep the port on a trusted LAN or VPN such as Tailscale; do not expose it to the internet. Use only accounts you own, and check each provider's terms before routing a subscription through a proxy. Support: https://github.com/ntindle/unraid-apps/issues</Requires>
 
   <Config Name="API and Web UI Port" Target="8317" Default="8317" Mode="tcp" Description="Host TCP port mapped to container port 8317. Serves the API, the Responses WebSocket and the web console at /management.html." Type="Port" Display="always" Required="true" Mask="false">8317</Config>
   <Config Name="App Data" Target="/data" Default="/mnt/user/appdata/cliproxyapi" Mode="rw" Description="Persistent config.yaml, OAuth credentials (auths), logs, plugins and the downloaded web console. Contains secrets; include it in backups." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/cliproxyapi</Config>

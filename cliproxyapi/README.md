@@ -8,8 +8,8 @@ CLIProxyAPI puts Claude Code, Codex and the Muse CLI behind one endpoint on your
 sign your Claude, ChatGPT and Meta accounts in once; the proxy spreads requests across them, keeps
 each session on one account, and shows every account's quota and reset times in a web console.
 
-This repository holds deployment metadata only: the template, its icon and the checks that keep
-them valid. The application lives in the fork.
+This folder documents the template, [`templates/cliproxyapi.xml`](../templates/cliproxyapi.xml).
+It is deployment metadata only; the application lives in the fork.
 
 ## What the template deploys
 
@@ -34,7 +34,7 @@ After the first start the file belongs to the proxy and its console; the image n
 ## Install
 
 1. In **Docker → Add Container**, enter the fields below, or copy
-   [`templates/cliproxyapi.xml`](templates/cliproxyapi.xml) to
+   [`templates/cliproxyapi.xml`](../templates/cliproxyapi.xml) to
    `/boot/config/plugins/dockerMan/templates-user/my-CLIProxyAPI.xml` and pick it from the
    template list.
 2. Set **Management Password** before the first start. Without it the web console is disabled.
@@ -177,11 +177,11 @@ account, and `config.yaml` holds the client API keys.
 
 ## Support
 
-- Template issues: <https://github.com/ntindle/cliproxyapi-unraid/issues>
+- Template issues: <https://github.com/ntindle/unraid-apps/issues>
 - Fork: <https://github.com/ntindle/CLIProxyAPI> (see `FORK.md` for what it adds)
 - Upstream documentation: <https://help.router-for.me/>
 
 ## License
 
-The template and its documentation are licensed under the [MIT License](LICENSE). CLIProxyAPI
-is also MIT-licensed; see [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+The template and its documentation are licensed under the [MIT License](../LICENSE). CLIProxyAPI
+is also MIT-licensed; see [`THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md).

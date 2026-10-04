@@ -1,16 +1,18 @@
 # Unraid apps
 
 Unofficial Unraid templates maintained by ntindle. Each app has a template in
-[`templates/`](templates), an icon in [`images/`](images) and, when it needs its own image, a
-folder with the image source and its documentation.
+[`templates/`](templates), an icon in [`images/`](images) and a folder with its documentation
+and, when it needs its own image, the image source.
 
-| App | Template | Image | Docs |
-| --- | --- | --- | --- |
-| Supermemory | [`templates/supermemory.xml`](templates/supermemory.xml) | `ghcr.io/ntindle/unraid-apps/supermemory:latest` | [`supermemory/README.md`](supermemory/README.md) |
+| App | What it is | Template | Image | Docs |
+| --- | --- | --- | --- | --- |
+| CLIProxyAPI | Puts Claude Code, Codex and Muse behind one endpoint, spread across your own subscription accounts | [`templates/cliproxyapi.xml`](templates/cliproxyapi.xml) | `ghcr.io/ntindle/cliproxyapi:latest` ([fork](https://github.com/ntindle/CLIProxyAPI)) | [`cliproxyapi/README.md`](cliproxyapi/README.md) |
+| Executor | MCP gateway: one endpoint for MCP, OpenAPI and GraphQL integrations, credentials and tool policies held centrally | [`templates/executor.xml`](templates/executor.xml) | `ghcr.io/usefulsoftwareco/executor-selfhost:latest` (official) | [`executor/README.md`](executor/README.md) |
+| Supermemory | One memory store for your coding agents | [`templates/supermemory.xml`](templates/supermemory.xml) | `ghcr.io/ntindle/unraid-apps/supermemory:latest` (built here) | [`supermemory/README.md`](supermemory/README.md) |
 
-Two more templates live in their own repositories:
-[CLIProxyAPI](https://github.com/ntindle/cliproxyapi-unraid) and
-[Executor](https://github.com/ntindle/executor-unraid).
+CLIProxyAPI and Executor used to live in their own repositories, `ntindle/cliproxyapi-unraid`
+and `ntindle/executor-unraid`. Their history is part of this repository's; the old repositories
+are archived.
 
 ## Install an app
 
@@ -25,14 +27,17 @@ Two more templates live in their own repositories:
 scripts/validate.sh
 ```
 
-checks every template, the profile and the icons. Each app with its own image also has a smoke
-test that boots the image and checks the container contract:
+checks every template, the profile and the icons, and each template's container contract. Each
+app also has a smoke test that boots its image the way the template runs it:
 
 ```bash
+scripts/smoke-test-cliproxyapi.sh
+scripts/smoke-test-executor.sh
 scripts/smoke-test-supermemory.sh
 ```
 
-CI runs both on every push and publishes an app's image only after its smoke test passes.
+CI runs all of them on every push and pull request, and daily so a broken upstream `:latest`
+image shows up. It publishes an image built here only after its smoke test passes.
 
 ## Support
 

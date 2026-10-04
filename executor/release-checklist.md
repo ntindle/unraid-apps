@@ -4,8 +4,8 @@
 
 - [ ] Repository is public and the default branch is `main`.
 - [ ] Root MIT license, `ca_profile.xml`, template XML, and icon are present.
-- [ ] `scripts/validate.sh`, shell syntax, ShellCheck, and the runtime smoke test
-      pass on the exact release commit.
+- [ ] `scripts/validate.sh`, shell syntax, ShellCheck, and
+      `scripts/smoke-test-executor.sh` pass on the exact release commit.
 - [ ] The `latest` image resolves to the intended stable Executor release and
       exists for `linux/amd64` and `linux/arm64`; record its digest for rollback.
 - [ ] Public project, support, registry, readme, template, and icon URLs return

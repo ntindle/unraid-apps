@@ -1,6 +1,6 @@
 # Executor for Unraid
 
-This repository provides an unofficial
+This folder documents an unofficial
 [Unraid Community Applications](https://unraid.net/community/apps) template for
 [Executor](https://github.com/UsefulSoftwareCo/executor), a self-hosted MCP
 gateway for AI agents.
@@ -10,7 +10,7 @@ GraphQL integrations. Credentials and per-tool allow, approval, or block
 policies stay in the central Executor service instead of being copied into
 every agent environment.
 
-This repository contains deployment metadata only. It does not fork or modify
+The template is deployment metadata only. It does not fork or modify
 Executor, and it is not affiliated with or endorsed by Useful Software Co.
 
 ## What the template deploys
@@ -52,7 +52,7 @@ contract manually:
 | Extra Parameters | `--restart=unless-stopped --log-driver json-file --log-opt max-size=10m --log-opt max-file=3` |
 
 The canonical template remains available for review at
-[`templates/executor.xml`](templates/executor.xml). Current Unraid 7.2 Docker
+[`templates/executor.xml`](../templates/executor.xml). Current Unraid 7.2 Docker
 Authoring Mode does not expose a raw-template URL importer, so the catalog is
 the intended one-click distribution path.
 
@@ -61,7 +61,7 @@ you will open in the browser, including its scheme and any non-default port.
 Examples:
 
 ```text
-http://192.168.1.10:4788
+http://tower.local:4788
 https://executor.example.com
 ```
 
@@ -114,7 +114,7 @@ discarding the generated key files beside it.
 The template follows the upstream stable `:latest` channel so Unraid can detect
 new image digests and the Auto Update Applications plugin can apply them. The
 last validated release and digest are recorded in
-[`docs/validation.md`](docs/validation.md) to make rollback auditable.
+[`validation.md`](validation.md) to make rollback auditable.
 
 Automatic application is still opt-in through your Unraid update policy. Run
 the appdata backup before the container-update window so the database and both
@@ -122,7 +122,7 @@ generated key files are recoverable together.
 
 ## Support and provenance
 
-- Template issues: <https://github.com/ntindle/executor-unraid/issues>
+- Template issues: <https://github.com/ntindle/unraid-apps/issues>
 - Executor documentation: <https://executor.sh/docs/hosted/docker>
 - Executor product issues: <https://github.com/UsefulSoftwareCo/executor/issues>
 - Official image: <https://github.com/UsefulSoftwareCo/executor/pkgs/container/executor-selfhost>
@@ -133,6 +133,6 @@ container health state, and relevant logs with credentials and tokens removed.
 ## License
 
 The template source and documentation are licensed under the
-[MIT License](LICENSE). Executor itself is also MIT-licensed. The Executor name
+[MIT License](../LICENSE). Executor itself is also MIT-licensed. The Executor name
 and icon remain assets of their upstream owner; see
-[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+[`THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md).

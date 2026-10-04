@@ -1,7 +1,8 @@
 name: CI
 
-# Validates every template, smoke-tests each launcher image, and publishes an image to GHCR
-# when its source changed on main.
+# Validates every template, smoke-tests each app's image, and publishes an image built here to
+# GHCR when its source changed on main. The daily run catches a broken upstream :latest image,
+# which is what Unraid installs.
 #   latest                          moves with every build; this is the tag Unraid tracks
 #   <server version>-<short commit> immutable, for rollback
 
@@ -10,6 +11,9 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    # Daily, and on Mondays after the CLIProxyAPI fork's weekly upstream sync has published.
+    - cron: "17 12 * * *"
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -22,33 +26,67 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
       - name: Install validation tools
         run: sudo apt-get update && sudo apt-get install --yes libxml2-utils file shellcheck
       - name: Validate templates, profile and icons
         run: scripts/validate.sh
+      - name: Check shell syntax
+        run: for script in scripts/*.sh supermemory/entrypoint.sh; do bash -n "${script}"; done
       - name: Lint shell
         run: shellcheck scripts/*.sh supermemory/entrypoint.sh
+      - name: Check whitespace
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            git diff --check "${{ github.event.pull_request.base.sha }}...HEAD"
+          else
+            git show --check --format= HEAD
+          fi
+
+  cliproxyapi-smoke:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Install XML tools
+        run: sudo apt-get update && sudo apt-get install --yes libxml2-utils
+      - name: Boot the fork image and verify the container contract
+        run: scripts/smoke-test-cliproxyapi.sh
+
+  executor-smoke:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Install XML tools
+        run: sudo apt-get update && sudo apt-get install --yes libxml2-utils
+      - name: Boot Executor's stable channel and verify persistence
+        run: scripts/smoke-test-executor.sh
 
   supermemory-smoke:
     needs: validate
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
       - name: Boot the launcher image and verify the container contract
         run: scripts/smoke-test-supermemory.sh
 
   supermemory-image:
     needs: supermemory-smoke
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    # Not on the daily schedule: a publish only follows a change on main.
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
       - name: Log in to GHCR

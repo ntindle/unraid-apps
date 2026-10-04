@@ -4,15 +4,37 @@
 
 Use this repository's private security-advisory flow for vulnerabilities in a template, a
 launcher image or the documentation. Report vulnerabilities in an application itself to its
-own project.
+own project:
 
-Do not include passwords, API keys, the contents of an App Data path, or unredacted container
-logs in a public issue.
+- CLIProxyAPI: <https://github.com/router-for-me/CLIProxyAPI/security>. For what the
+  [ntindle fork](https://github.com/ntindle/CLIProxyAPI) adds, use this repository's advisory
+  flow.
+- Executor: <https://github.com/UsefulSoftwareCo/executor/security>.
+- Supermemory publishes no security policy or private reporting channel. Use this repository's
+  advisory flow and the report will be passed on.
+
+Do not include passwords, API keys, OAuth tokens, cookies, invite links, the contents of an App
+Data path, or unredacted container logs in a public issue.
 
 ## Deployment boundary
 
 No template here grants privileged mode, mounts the Docker socket, or mounts arbitrary Unraid
 shares. Each one publishes only the ports and the single App Data path its documentation lists.
+
+## CLIProxyAPI
+
+- `/data/auths` holds the OAuth credentials of every signed-in account and `/data/config.yaml`
+  holds the client API keys.
+- The management password gives access to both through the web console, and a client API key
+  can spend the quota of every signed-in account. Keep port `8317` on a trusted LAN or VPN.
+
+## Executor
+
+- App Data holds the database, the encrypted integration credentials and the generated keys
+  that decrypt them.
+- The defaults keep sandboxed private-network access and stdio MCP execution off. Turning either
+  on deliberately widens what configured workflows can reach or run; pair it with narrow
+  Executor policies.
 
 ## Supermemory
 

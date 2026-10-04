@@ -87,7 +87,9 @@ echo "ok: refuses to start without an LLM provider"
 
 start_container
 wait_healthy
-docker logs "${container}" 2>&1 | grep -q 'installed /data/bin/supermemory-server-' \
+# Read the log into a variable first: grep -q on a pipe makes docker fail under pipefail.
+logs="$(docker logs "${container}" 2>&1)"
+[[ "${logs}" == *"installed /data/bin/supermemory-server-"* ]] \
   || fail "the first start did not install the server"
 echo "ok: first start downloaded and verified the server"
 
@@ -104,9 +106,9 @@ assert_equal "$(docker exec "${container}" stat -c '%u' /proc/1)" "99" "the serv
 
 start_container
 wait_healthy
-if docker logs "${container}" 2>&1 | grep -q 'downloading supermemory-server'; then
-  fail "the server was downloaded again after the container was recreated"
-fi
+logs="$(docker logs "${container}" 2>&1)"
+[[ "${logs}" != *"downloading supermemory-server"* ]] \
+  || fail "the server was downloaded again after the container was recreated"
 echo "ok: the downloaded server is reused"
 [[ "$(docker exec "${container}" cat /data/store/api-key)" == "${api_key}" ]] \
   || fail "the API key changed when the container was recreated, so the database was not kept"

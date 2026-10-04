@@ -31,19 +31,20 @@ Before first start, set Web Base URL to the exact origin you will open in a brow
   <PostArgs/>
   <CPUset/>
 
-  <Requires>This is an unofficial Community Applications template for the official Executor image. Set Web Base URL to the exact scheme, hostname or IP, and host port used in the browser; authentication and generated links depend on it. The first account created becomes the owner, then open signup closes and additional users require single-use invites. The App Data path contains the SQLite database, encrypted integration credentials, and generated encryption/session keys; preserve and back it up. The container runs as user 99:100, which owns App Data on Unraid; App Data written by Executor 1.6.8 or earlier belongs to root, so back it up and run chown -R 99:100 on it before starting a newer image. Keep the service on a trusted LAN or VPN, or place it behind an authenticated TLS reverse proxy before remote exposure. Allow Local Network controls sandboxed outbound access to private addresses and is intentionally disabled by default. The distroless image has no interactive container shell; use Logs for troubleshooting. Support: https://github.com/ntindle/unraid-apps/issues</Requires>
+  <Requires>This is an unofficial Community Applications template for the official Executor image. Set Web Base URL to the exact scheme, hostname or IP, and host port used in the browser; authentication and generated links depend on it. The first account created becomes the owner, then open signup closes and additional users require single-use invites. The App Data path contains the SQLite database, encrypted integration credentials, and generated encryption/session keys; preserve and back it up. The container runs as user 99:100, which owns App Data on Unraid; A container added before this template has no --user and runs as the image's own user, which cannot write App Data: edit it and add --user 99:100 to Extra Parameters. App Data written by Executor 1.6.8 or earlier belongs to root; back it up and run chown -R 99:100 on it first. Keep the service on a trusted LAN or VPN, or place it behind an authenticated TLS reverse proxy before remote exposure. Allow Local Network controls sandboxed outbound access to private addresses and is intentionally disabled by default. The distroless image has no interactive container shell; use Logs for troubleshooting. Support: https://github.com/ntindle/unraid-apps/issues</Requires>
 
   <Changes>
-    ### 2026-10-04
-    - Moved to https://github.com/ntindle/unraid-apps with the other templates
-    - Run the container as 99:100. Since 1.6.10 the image runs as a non-root user and could not write an App Data path created by Unraid
-    - App Data from Executor 1.6.8 or earlier is owned by root: back it up and run chown -R 99:100 on it before upgrading
+### 2026-10-04
+- Moved to https://github.com/ntindle/unraid-apps with the other templates
+- Run the container as 99:100. Since 1.6.10 the image runs as a non-root user and could not write an App Data path created by Unraid
+- Existing containers keep their old Extra Parameters: add --user 99:100 by editing the container
+- App Data from Executor 1.6.8 or earlier is owned by root: back it up and run chown -R 99:100 on it first
 
-    ### 2026-09-04
-    - Initial Unraid template
-    - Track the official stable latest channel so Unraid application updates work
-    - Persist /data and require an explicit browser origin
-    - Keep private-network and host-command access disabled by default
+### 2026-09-04
+- Initial Unraid template
+- Track the official stable latest channel so Unraid application updates work
+- Persist /data and require an explicit browser origin
+- Keep private-network and host-command access disabled by default
   </Changes>
 
   <Config Name="Web UI and MCP Port" Target="4788" Default="4788" Mode="tcp" Description="Host TCP port mapped to container port 4788. The MCP endpoint is /mcp." Type="Port" Display="always" Required="true" Mask="false">4788</Config>

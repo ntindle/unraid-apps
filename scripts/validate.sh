@@ -31,8 +31,8 @@ expect() {
 value() { xmllint --xpath "string($1)" "${template}"; }
 
 xmllint --noout "${profile}"
-[[ -n "$(xmllint --xpath 'string(/CommunityApplications/Profile)' "${profile}")" ]] \
-  || fail "ca_profile.xml has no profile text"
+profile_text="$(xmllint --xpath 'string(/CommunityApplications/Profile)' "${profile}")"
+[[ -n "${profile_text//[[:space:]]/}" ]] || fail "ca_profile.xml has no profile text"
 expect "profile forum" "$(xmllint --xpath 'string(/CommunityApplications/Forum)' "${profile}")" "${support}"
 
 shopt -s nullglob
@@ -63,12 +63,13 @@ for template in "${templates[@]}"; do
     fail "images/${app}.png must be a square PNG, got: ${icon_description}"
   fi
 
-  # A masked field is a secret, so the published template must leave it empty.
-  masked_values="$(xmllint --xpath '/Container/Config[@Mask="true"]/text()' "${template}" 2>/dev/null || true)"
-  [[ -z "${masked_values//[[:space:]]/}" ]] || fail "${app}: a masked field has a value"
+  # A masked field is a secret, so the published template must leave it empty. Whitespace counts:
+  # Unraid would pre-fill the field with it and never prompt for the real value.
+  expect "${app} masked fields with a value" \
+    "$(xmllint --xpath 'count(/Container/Config[@Mask="true"][string-length(.) > 0])' "${template}")" "0"
 
-  duplicate_targets="$(xmllint --xpath '/Container/Config/@Target' "${template}" \
-    | grep -o 'Target="[^"]*"' | sort | uniq -d)"
+  duplicate_targets="$(xmllint --xpath '/Container/Config/@Target' "${template}" 2>/dev/null \
+    | grep -o 'Target="[^"]*"' | sort | uniq -d || true)"
   [[ -z "${duplicate_targets}" ]] || fail "${app}: duplicate Config targets: ${duplicate_targets//$'\n'/ }"
 done
 

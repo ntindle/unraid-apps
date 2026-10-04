@@ -5,6 +5,10 @@ identify the software a template installs; no template here is affiliated with o
 the project it deploys. This repository's MIT License covers the templates, launcher scripts and
 documentation; it grants no rights in those names or that artwork.
 
+The two icons copied from other projects come from MIT-licensed repositories. Each is used under
+its copyright notice below and the MIT permission notice, which is word for word the one in
+[`LICENSE`](LICENSE).
+
 ## CLIProxyAPI
 
 The CLIProxyAPI template deploys the [ntindle fork](https://github.com/ntindle/CLIProxyAPI) of
@@ -20,7 +24,11 @@ Copyright (c) 2025.9-present Router-For.ME
 [`images/cliproxyapi.png`](images/cliproxyapi.png) is the logo of the upstream management
 console, [`router-for-me/Cli-Proxy-API-Management-Center`](https://github.com/router-for-me/Cli-Proxy-API-Management-Center)
 (MIT License), cropped to a square and scaled to 512x512. The source file was `logo.jpg`, Git
-blob `f701a6c2268cd3a7b22e63487f13778b6e9ca4af`.
+blob `f701a6c2268cd3a7b22e63487f13778b6e9ca4af`. That repository's license identifies:
+
+```text
+Copyright (c) 2026 Router-For.ME
+```
 
 ## Executor
 

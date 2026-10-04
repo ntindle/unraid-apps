@@ -78,7 +78,8 @@ jobs:
 
   supermemory-image:
     needs: supermemory-smoke
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    # Not on the daily schedule: a publish only follows a change on main.
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:

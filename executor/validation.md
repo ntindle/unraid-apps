@@ -22,7 +22,9 @@ with mode `0755`. The daily smoke test failed this way from 2026-09-19.
 
 The template now runs the container as `99:100`. The smoke test creates its
 data directory the way Unraid does, runs the image as the template's `--user`,
-and checks that the generated keys belong to that user. Data written by `1.6.8`
+and checks that the generated keys belong to that user. Unraid does not apply
+template changes to existing containers, so a container added earlier needs
+`--user 99:100` added to its Extra Parameters by hand. Data written by `1.6.8`
 or earlier is owned by root and needs `chown -R 99:100` before the first start
 of a newer image.
 

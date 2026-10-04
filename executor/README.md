@@ -121,19 +121,29 @@ Automatic application is still opt-in through your Unraid update policy. Run
 the appdata backup before the container-update window so the database and both
 generated key files are recoverable together.
 
-### Upgrading from Executor 1.6.8 or earlier
+### Containers added before 2026-10-04
 
 Since 1.6.10 the image runs as a non-root user, and the template runs it as
-`99:100`, the owner Unraid gives App Data. Data written by 1.6.8 or earlier
-belongs to root, so the new image cannot open its key files and stops with
-`EACCES: permission denied, open '/data/secret.key'`. Stop the container, back
-up the appdata directory, then fix the ownership from the Unraid terminal:
+`99:100`, the owner Unraid gives App Data. Unraid never carries a template
+change into a container that already exists, so a container added from an
+earlier version of this template, or by hand, still has no `--user`. It runs
+as the image's own user, which cannot write App Data, and stops with
+`EACCES: permission denied, open '/data/secret.key'`.
 
-```bash
-chown -R 99:100 /mnt/user/appdata/executor
-```
+1. Stop the container and back up the appdata directory.
+2. Only if the data was written by Executor 1.6.8 or earlier (it belongs to
+   root), fix its ownership from the Unraid terminal:
 
-The image has no shell, so this cannot be done from inside the container.
+   ```bash
+   chown -R 99:100 /mnt/user/appdata/executor
+   ```
+
+3. **Docker → Executor → Edit**, add `--user 99:100` to **Extra Parameters**
+   (Advanced View), and select **Apply**. Apply recreates and starts the
+   container, so do step 2 first.
+
+The image has no shell, so the ownership cannot be fixed from inside the
+container.
 
 ## Support and provenance
 

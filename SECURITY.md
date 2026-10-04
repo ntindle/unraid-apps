@@ -6,10 +6,12 @@ Use this repository's private security-advisory flow for vulnerabilities in a te
 launcher image or the documentation. Report vulnerabilities in an application itself to its
 own project:
 
-- CLIProxyAPI: <https://github.com/ntindle/CLIProxyAPI/security> when they concern what the
-  fork adds, <https://github.com/router-for-me/CLIProxyAPI/security> otherwise.
+- CLIProxyAPI: <https://github.com/router-for-me/CLIProxyAPI/security>. For what the
+  [ntindle fork](https://github.com/ntindle/CLIProxyAPI) adds, use this repository's advisory
+  flow.
 - Executor: <https://github.com/UsefulSoftwareCo/executor/security>.
-- Supermemory: <https://github.com/supermemoryai/supermemory/security>.
+- Supermemory publishes no security policy or private reporting channel. Use this repository's
+  advisory flow and the report will be passed on.
 
 Do not include passwords, API keys, OAuth tokens, cookies, invite links, the contents of an App
 Data path, or unredacted container logs in a public issue.

@@ -139,6 +139,34 @@ one has written.
 The template tracks `:latest` of the launcher image, so Unraid offers **apply update** when the
 launcher changes. Updating it does not change the server version or touch App Data.
 
+## Memory
+
+The server holds its whole database in memory, and that memory never shrinks. It pauses
+ingestion while its memory use is more than a limit above what it used at startup, and resumes
+only when use falls back under. As the database grows, use stays above the limit and the pause
+becomes permanent. Version 0.0.8 then loses memories rather than delaying them: text sent to a
+session whose document is still waiting is acknowledged and dropped, and documents left waiting
+are marked failed after a few retries.
+
+**Ingest Memory Limit** (`SUPERMEMORY_EMBEDDING_RAM_LIMIT`) sets that limit. The server's own
+default is `1gb`, which a busy store outgrows within days; the template sets `4gb`. Accepted values
+look like `4gb`, `8gb` or `512mb`; anything else silently falls back to `1gb`. The container log
+shows the value in effect at startup:
+
+```text
+[ingest] memory limit 4.0 GB above baseline (1.8 GB) · 2 concurrent
+```
+
+A stalled server logs this repeatedly:
+
+```text
+[ingest] 0 running · 234 queued · paused — 1.0 GB / 1.0 GB ingest memory, waiting for it to drop
+```
+
+To recover, stop the container with time to save (`docker stop -t 120 Supermemory`), raise the
+limit, and start it again. A restart alone also clears the pause, until the database grows by
+about the limit again.
+
 ## Stopping the container
 
 The server keeps its database in memory and writes it to `store/data` within about a minute of
@@ -160,4 +188,6 @@ it; one without the other is not recoverable.
   internet.
 - Anyone with the API key can read and change every stored memory.
 - App Data holds every memory and both keys. Treat it as a secret.
+- The server prints its API key in the container log at every start. Treat the log as secret
+  too, and filter that line out when sharing log output.
 - The LLM provider receives the content clients send.

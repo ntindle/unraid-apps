@@ -82,6 +82,8 @@ expect "supermemory data default" "$(value '/Container/Config[@Name="App Data"]/
 expect "supermemory key target" "$(value '/Container/Config[@Name="LLM API Key"]/@Target')" "OPENAI_API_KEY"
 expect "supermemory key masked" "$(value '/Container/Config[@Name="LLM API Key"]/@Mask')" "true"
 expect "supermemory guard value" "$(value '/Container/Config[@Name="Host Guard"]')" "on"
+expect "supermemory ingest limit target" "$(value '/Container/Config[@Name="Ingest Memory Limit"]/@Target')" "SUPERMEMORY_EMBEDDING_RAM_LIMIT"
+expect "supermemory ingest limit value" "$(value '/Container/Config[@Name="Ingest Memory Limit"]')" "4gb"
 
 # The version the template offers must be the one the image defaults to and has pinned.
 template_version="$(value '/Container/Config[@Name="Server Version"]')"

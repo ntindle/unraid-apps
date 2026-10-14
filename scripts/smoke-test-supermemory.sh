@@ -78,6 +78,13 @@ list_documents() {
     --header 'Content-Type: application/json' --data '{"page":1,"limit":1}' "$@"
 }
 
+console_port="${SUPERMEMORY_SMOKE_CONSOLE_PORT:-16798}"
+console_base="http://127.0.0.1:${console_port}"
+console_list() {
+  status --request POST "${console_base}/v3/documents/list" \
+    --header 'Content-Type: application/json' --data '{"page":1,"limit":1}' "$@"
+}
+
 # Without a provider the launcher must stop before it downloads anything.
 if output="$(docker run --rm --volume "${data_dir}:/data" "${image}" 2>&1)"; then
   fail "the container started without an LLM provider"
@@ -85,7 +92,8 @@ fi
 [[ "${output}" == *"no LLM provider is configured"* ]] || fail "unexpected error without a provider: ${output}"
 echo "ok: refuses to start without an LLM provider"
 
-start_container
+# The console is on from the first start, before the server has written its API key.
+start_container --publish "127.0.0.1:${console_port}:6769" --env SUPERMEMORY_CONSOLE_PASSWORD=smoke-console
 wait_healthy
 # Read the log into a variable first: grep -q on a pipe makes docker fail under pipefail.
 logs="$(docker logs "${container}" 2>&1)"
@@ -103,6 +111,12 @@ assert_equal "$(list_documents --header 'Authorization: Bearer sm_wrong')" "401"
 assert_equal "$(list_documents --header "Authorization: Bearer ${api_key}")" "200" "the API key is accepted"
 assert_equal "$(docker exec "${container}" stat -c '%u:%g' /data/store)" "99:100" "state is owned by 99:100"
 assert_equal "$(docker exec "${container}" stat -c '%u' /proc/1)" "99" "the server runs as user 99"
+# The launcher gives the console the key once the server has written it.
+for _ in $(seq 1 20); do
+  [[ "$(console_list --user admin:smoke-console)" == "200" ]] && break
+  sleep 1
+done
+assert_equal "$(console_list --user admin:smoke-console)" "200" "first start: the console gets the API key once the server writes it"
 
 start_container
 wait_healthy
@@ -114,25 +128,21 @@ echo "ok: the downloaded server is reused"
   || fail "the API key changed when the container was recreated, so the database was not kept"
 echo "ok: the database and API key survive a recreate"
 
-# The console port asks for its password and then needs no API key.
-console_port="${SUPERMEMORY_SMOKE_CONSOLE_PORT:-16798}"
-console_base="http://127.0.0.1:${console_port}"
+# The console port asks for its password and then forwards with the server's API key.
 start_container --publish "127.0.0.1:${console_port}:6769" --env SUPERMEMORY_CONSOLE_PASSWORD=smoke-console
 wait_healthy
-console_list() {
-  status --request POST "${console_base}/v3/documents/list" \
-    --header 'Content-Type: application/json' --data '{"page":1,"limit":1}' "$@"
-}
 assert_equal "$(console_list)" "401" "console without its password is rejected"
 assert_equal "$(console_list --user admin:wrong)" "401" "console with a wrong password is rejected"
 assert_equal "$(console_list --user admin:smoke-console)" "200" "console with its password needs no API key"
 assert_equal "$(status --user admin:smoke-console "${console_base}/")" "200" "console page loads"
 assert_equal "$(list_documents)" "401" "the API port still requires the key while the console is on"
 
-# With the guard off the image shows the server's own behaviour. If this starts failing after
-# a version bump, the server has stopped trusting the Host header and the guard can go.
+# With the guard off the image shows the server's own behaviour. Up to 0.0.8 a loopback Host
+# header skipped the key; from 0.0.9 the server requires it for every request ("Localhost
+# requests now require the key"). The guard stays for older versions and the console port.
 start_container --env SUPERMEMORY_HOST_GUARD=off
 wait_healthy
-assert_equal "$(list_documents)" "200" "guard off: a loopback Host header skips the key"
+assert_equal "$(list_documents)" "401" "guard off: the server itself requires the key"
+assert_equal "$(list_documents --header "Authorization: Bearer ${api_key}")" "200" "guard off: the published port reaches the server"
 
 echo "Supermemory smoke test passed"

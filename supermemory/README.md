@@ -100,12 +100,15 @@ it is `done`, which takes one to two minutes.
 ## Web console
 
 The server ships a web console at `/#memory` that lists documents and draws the memory graph.
-It sends no API key, so it only works for requests the server treats as local.
+It sends no API key. Up to 0.0.8 it only works for requests the server treats as local; from
+0.0.9 the server wants the key for those too.
 
 Set **Console Password** to turn on port `6769`. It asks for user `admin` and that password,
-then forwards to the server as a local request, so the console works from a browser and the
-**WebUI** button in Unraid opens it. Anyone who signs in can read and change every stored
-memory. With the password empty, nothing listens on `6769`.
+then forwards to the server as a local request carrying the server's API key (from
+`store/api-key`; on the very first start the console gets the key once the server has written
+it), so the console works from a browser and the **WebUI** button in Unraid opens it. Anyone who
+signs in can read and change every stored memory. With the password empty, nothing listens on
+`6769`.
 
 ## What this build does not do
 
@@ -116,13 +119,16 @@ memory. With the password empty, nothing listens on `6769`.
 
 ## Host guard
 
-The server skips its API key for any request whose `Host` header names the loopback address
-(`localhost`, `127.0.0.1`, `[::1]`). A client on the network can send that header, so a
-published port would be open to anyone who can reach it.
+Up to 0.0.8 the server skips its API key for any request whose `Host` header names the loopback
+address (`localhost`, `127.0.0.1`, `[::1]`). A client on the network can send that header, so a
+published port would be open to anyone who can reach it. From 0.0.9 the server requires the key
+for those requests too.
 
 The launcher puts nginx on port `6767` and runs the server on an internal port. nginx forwards
 every request with a fixed, non-loopback `Host`, so every API request needs the key. Set
-**Host Guard** to `off` to get the server's own behaviour back.
+**Host Guard** to `off` to get the server's own behaviour back; the launcher then has the server
+listen on all of the container's addresses (`SUPERMEMORY_HOST=0.0.0.0`; from 0.0.9 it listens on
+`127.0.0.1` by default, which the published port cannot reach).
 
 The guard covers the published port. Other containers on the same Docker network can still
 reach the server's internal port, `16767`, directly.
@@ -134,7 +140,9 @@ versions listed in [`checksums.txt`](checksums.txt). For any other version the l
 the checksum published with that release; set `SUPERMEMORY_SHA256` to pin it yourself.
 
 Back up App Data before changing the version. An older server may not read a database a newer
-one has written.
+one has written. 0.0.9 migrates an existing store on its first start (its release notes: it
+"verifies a complete original backup" first) and may remove older duplicate documents; 0.0.8
+cannot open the migrated store, so going back means restoring your App Data backup.
 
 The template tracks `:latest` of the launcher image, so Unraid offers **apply update** when the
 launcher changes. Updating it does not change the server version or touch App Data.

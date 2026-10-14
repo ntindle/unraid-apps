@@ -77,9 +77,24 @@ if [[ "$(id -u)" == "0" && "${PUID}" != "0" ]]; then
   run_as=(setpriv --reuid "${PUID}" --regid "${PGID}" --clear-groups)
 fi
 
-# The server skips its API key for any request whose Host header names the loopback address,
-# and a client on the network can send that header. The guard answers on the public port and
-# forwards every request with a fixed, non-loopback Host, so the key is always required.
+# Up to 0.0.8 the server skips its API key for any request whose Host header names the loopback
+# address, and a client on the network can send that header. The guard answers on the public port
+# and forwards every request with a fixed, non-loopback Host, so the key is always required. From
+# 0.0.9 the server requires the key for loopback requests too; the guard stays for older
+# versions and for the console port.
+api_key_file="${data}/store/api-key"
+# Writes the console's Authorization header from the server's API key; fails while there is none.
+write_console_auth() {
+  local key=""
+  [[ -s "${api_key_file}" ]] && key="$(tr -d '[:space:]' <"${api_key_file}")"
+  if [[ "${key}" =~ ^[A-Za-z0-9_-]+$ ]]; then
+    printf 'proxy_set_header Authorization "Bearer %s";\n' "${key}" >"${guard_dir}/console-auth.conf"
+  else
+    printf 'proxy_set_header Authorization "";\n' >"${guard_dir}/console-auth.conf"
+    return 1
+  fi
+}
+
 if [[ "${SUPERMEMORY_HOST_GUARD:-on}" != "off" ]]; then
   internal_port="${SUPERMEMORY_INTERNAL_PORT:-16767}"
   if ! port_ok "${internal_port}" || [[ "${internal_port}" == "${PORT}" ]]; then
@@ -89,9 +104,10 @@ if [[ "${SUPERMEMORY_HOST_GUARD:-on}" != "off" ]]; then
   rm -rf "${guard_dir}"
   mkdir -p "${guard_dir}/tmp"
 
-  # The server's web console sends no API key and only works for loopback requests. With a
-  # console password set, a second port asks for that password and then forwards with a
-  # loopback Host, so the console works from a browser on the network.
+  # The server's web console sends no API key. Up to 0.0.8 it works only through the loopback
+  # exemption; from 0.0.9 every request needs the key. With a console password set, a second port
+  # asks for that password and then forwards with a loopback Host and the server's own API key,
+  # so the console works from a browser on the network with either version.
   console_server=""
   console_port="${SUPERMEMORY_CONSOLE_PORT:-6769}"
   if [[ -n "${SUPERMEMORY_CONSOLE_PASSWORD:-}" ]]; then
@@ -99,6 +115,8 @@ if [[ "${SUPERMEMORY_HOST_GUARD:-on}" != "off" ]]; then
       die "SUPERMEMORY_CONSOLE_PORT must be a TCP port other than PORT and SUPERMEMORY_INTERNAL_PORT, got '${console_port}'"
     fi
     printf 'admin:%s\n' "$(printf '%s' "${SUPERMEMORY_CONSOLE_PASSWORD}" | openssl passwd -apr1 -stdin)" >"${guard_dir}/console.htpasswd"
+    # The server writes its key on first start. Until it exists the console forwards without one.
+    write_console_auth || :
     console_server="
   server {
     listen ${console_port};
@@ -108,7 +126,7 @@ if [[ "${SUPERMEMORY_HOST_GUARD:-on}" != "off" ]]; then
       proxy_pass http://127.0.0.1:${internal_port};
       proxy_http_version 1.1;
       proxy_set_header Host localhost;
-      proxy_set_header Authorization \"\";
+      include ${guard_dir}/console-auth.conf;
       proxy_set_header Upgrade \$http_upgrade;
       proxy_set_header Connection \$connection_upgrade;
       proxy_buffering off;
@@ -152,8 +170,24 @@ http {
 }
 EOF
   chown -R "${PUID}:${PGID}" "${guard_dir}"
+  [[ ! -f "${guard_dir}/console-auth.conf" ]] || chmod 0600 "${guard_dir}/console-auth.conf"
   "${run_as[@]}" nginx -e stderr -c "${guard_dir}/nginx.conf" -t -q || die "the host guard configuration is invalid"
   "${run_as[@]}" nginx -e stderr -c "${guard_dir}/nginx.conf"
+  if [[ -n "${console_server}" ]] && ! grep -q Bearer "${guard_dir}/console-auth.conf"; then
+    # First start: give the console the key once the server has written it.
+    (
+      for _ in $(seq 1 600); do
+        sleep 1
+        if write_console_auth; then
+          chown "${PUID}:${PGID}" "${guard_dir}/console-auth.conf"
+          chmod 0600 "${guard_dir}/console-auth.conf"
+          "${run_as[@]}" nginx -e stderr -c "${guard_dir}/nginx.conf" -s reload && log "web console now sends the API key"
+          exit 0
+        fi
+      done
+      log "the server wrote no API key within 10 minutes; restart the container to give the console its key"
+    ) &
+  fi
   log "host guard listening on port ${PORT}; the API key is required for every API request"
   if [[ -n "${console_server}" ]]; then
     log "web console on port ${console_port}, user admin, password from SUPERMEMORY_CONSOLE_PASSWORD"
@@ -162,7 +196,10 @@ EOF
   fi
   export PORT="${internal_port}" SUPERMEMORY_PORT="${internal_port}"
 else
-  log "host guard is off: requests that send a loopback Host header skip the API key"
+  log "host guard is off: up to 0.0.8, requests that send a loopback Host header skip the API key"
+  # From 0.0.9 the server listens on 127.0.0.1 unless told otherwise, which a published port
+  # cannot reach.
+  export SUPERMEMORY_HOST="${SUPERMEMORY_HOST:-0.0.0.0}"
 fi
 
 export HOME="${data}/home"

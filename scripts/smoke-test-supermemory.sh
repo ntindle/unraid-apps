@@ -115,11 +115,11 @@ server_pid="$(docker exec "${container}" sh -c 'for p in /proc/[0-9]*; do [ "$(c
 assert_equal "$(docker exec "${container}" stat -c '%u' "/proc/${server_pid}")" "99" "the server runs as user 99"
 assert_equal "$(docker inspect --format '{{.HostConfig.Init}}' "${container}")" "true" "orphan reaping is enabled"
 # Reproduce an unresponsive server: the probe must time itself out before Docker's deadline.
-docker exec "${container}" kill -STOP "${server_pid}"
+docker exec "${container}" sh -c 'kill -STOP "$1"' sh "${server_pid}"
 probe="$(docker inspect --format '{{index .Config.Healthcheck.Test 1}}' "${container}")"
 probe_status=0
 docker exec "${container}" sh -c "${probe}" >/dev/null 2>&1 || probe_status=$?
-docker exec "${container}" kill -CONT "${server_pid}"
+docker exec "${container}" sh -c 'kill -CONT "$1"' sh "${server_pid}"
 assert_equal "${probe_status}" "28" "a hung-server probe exits on curl's own timeout"
 
 # The launcher gives the console the key once the server has written it.

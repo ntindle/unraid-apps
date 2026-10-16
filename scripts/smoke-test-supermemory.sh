@@ -110,7 +110,7 @@ assert_equal "$(list_documents --header 'Host: localhost')" "401" "no key with a
 assert_equal "$(list_documents --header 'Authorization: Bearer sm_wrong')" "401" "wrong key is rejected"
 assert_equal "$(list_documents --header "Authorization: Bearer ${api_key}")" "200" "the API key is accepted"
 assert_equal "$(docker exec "${container}" stat -c '%u:%g' /data/store)" "99:100" "state is owned by 99:100"
-server_pid="$(docker exec "${container}" sh -c 'for p in /proc/[0-9]*; do [ "$(cat "$p/comm" 2>/dev/null)" = supermemory-ser ] && echo "${p##*/}"; done')"
+server_pid="$(docker exec "${container}" sh -c 'for p in /proc/[0-9]*; do [ "$(cat "$p/comm" 2>/dev/null)" = supermemory-ser ] && echo "${p##*/}"; done; true')"
 [[ "${server_pid}" =~ ^[0-9]+$ ]] || fail "could not identify the server process"
 assert_equal "$(docker exec "${container}" stat -c '%u' "/proc/${server_pid}")" "99" "the server runs as user 99"
 assert_equal "$(docker inspect --format '{{.HostConfig.Init}}' "${container}")" "true" "orphan reaping is enabled"

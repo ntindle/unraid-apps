@@ -48,7 +48,7 @@ start_container() {
   docker rm --force "${container}" >/dev/null 2>&1 || true
   docker run --detach \
     --name "${container}" \
-    --restart=no \
+    --restart=no --init \
     --publish "127.0.0.1:${host_port}:6767" \
     --volume "${data_dir}:/data" \
     --env OPENAI_API_KEY=smoke-test-not-a-real-key \
@@ -110,7 +110,18 @@ assert_equal "$(list_documents --header 'Host: localhost')" "401" "no key with a
 assert_equal "$(list_documents --header 'Authorization: Bearer sm_wrong')" "401" "wrong key is rejected"
 assert_equal "$(list_documents --header "Authorization: Bearer ${api_key}")" "200" "the API key is accepted"
 assert_equal "$(docker exec "${container}" stat -c '%u:%g' /data/store)" "99:100" "state is owned by 99:100"
-assert_equal "$(docker exec "${container}" stat -c '%u' /proc/1)" "99" "the server runs as user 99"
+server_pid="$(docker exec "${container}" sh -c 'for p in /proc/[0-9]*; do [ "$(cat "$p/comm" 2>/dev/null)" = supermemory-ser ] && echo "${p##*/}"; done; true')"
+[[ "${server_pid}" =~ ^[0-9]+$ ]] || fail "could not identify the server process"
+assert_equal "$(docker exec "${container}" stat -c '%u' "/proc/${server_pid}")" "99" "the server runs as user 99"
+assert_equal "$(docker inspect --format '{{.HostConfig.Init}}' "${container}")" "true" "orphan reaping is enabled"
+# Reproduce an unresponsive server: the probe must time itself out before Docker's deadline.
+docker exec "${container}" sh -c 'kill -STOP "$1"' sh "${server_pid}"
+probe="$(docker inspect --format '{{index .Config.Healthcheck.Test 1}}' "${container}")"
+probe_status=0
+docker exec "${container}" sh -c "${probe}" >/dev/null 2>&1 || probe_status=$?
+docker exec "${container}" sh -c 'kill -CONT "$1"' sh "${server_pid}"
+assert_equal "${probe_status}" "28" "a hung-server probe exits on curl's own timeout"
+
 # The launcher gives the console the key once the server has written it.
 for _ in $(seq 1 20); do
   [[ "$(console_list --user admin:smoke-console)" == "200" ]] && break

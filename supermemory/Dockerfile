@@ -22,7 +22,8 @@ VOLUME /data
 EXPOSE 6767 6769
 
 # The first start downloads the server (about 300 MB) before it listens.
+# Exit before Docker kills the probe shell; exec also prevents an orphan curl when killed.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10m --retries=3 \
-    CMD curl --fail --silent --show-error --output /dev/null "http://127.0.0.1:${PORT}/" || exit 1
+    CMD exec curl --max-time 3 --fail --silent --show-error --output /dev/null "http://127.0.0.1:${PORT}/" || exit 1
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

@@ -199,3 +199,11 @@ it; one without the other is not recoverable.
 - The server prints its API key in the container log at every start. Treat the log as secret
   too, and filter that line out when sharing log output.
 - The LLM provider receives the content clients send.
+
+### Health-check process handling
+
+Keep `--init` in the container options so orphaned children are reaped. The health probe uses
+`exec curl --max-time 3`, shorter than Docker's five-second deadline. This prevents a hung server
+from accumulating orphaned health probes until its PID limit is exhausted. Existing Unraid
+containers pick up `--init` through Edit → Apply; an image update alone only changes the probe.
+This does not fix a hang inside the server binary.

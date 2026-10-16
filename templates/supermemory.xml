@@ -27,7 +27,7 @@ Set one LLM provider before the first start: an OpenAI key, an OpenAI-compatible
   <TemplateURL>https://raw.githubusercontent.com/ntindle/unraid-apps/main/templates/supermemory.xml</TemplateURL>
   <Icon>https://raw.githubusercontent.com/ntindle/unraid-apps/main/images/supermemory.png</Icon>
 
-  <ExtraParams>--restart=unless-stopped --stop-timeout=120 --log-driver json-file --log-opt max-size=10m --log-opt max-file=3</ExtraParams>
+  <ExtraParams>--init --restart=unless-stopped --stop-timeout=120 --log-driver json-file --log-opt max-size=10m --log-opt max-file=3</ExtraParams>
   <PostArgs/>
   <CPUset/>
 

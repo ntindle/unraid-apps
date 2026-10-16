@@ -48,7 +48,7 @@ start_container() {
   docker rm --force "${container}" >/dev/null 2>&1 || true
   docker run --detach \
     --name "${container}" \
-    --restart=no \
+    --restart=no --init \
     --publish "127.0.0.1:${host_port}:6767" \
     --volume "${data_dir}:/data" \
     --env OPENAI_API_KEY=smoke-test-not-a-real-key \

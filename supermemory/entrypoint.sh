@@ -71,6 +71,18 @@ if ! checksum_ok "${bin}"; then
   log "installed ${bin}"
 fi
 
+# A persisted Rivet PID belongs to the previous container's PID namespace. After a
+# crash it can identify an unrelated thread in this new namespace; 0.0.8 blindly
+# sends SIGKILL to it during startup, killing its own server. No engine has been
+# launched in this container yet. Preserve the pointer for diagnosis, not reuse.
+# Each container must have its own /data; sharing a live store is unsupported.
+rivet_pid="${data}/store/runtime/rivet/engine.pid"
+if [[ -e "${rivet_pid}" ]]; then
+  archived_pid="$(mktemp "${rivet_pid}.stale.XXXXXXXX")"
+  mv -- "${rivet_pid}" "${archived_pid}"
+  log "preserved a stale Rivet PID file before starting the server"
+fi
+
 run_as=()
 if [[ "$(id -u)" == "0" && "${PUID}" != "0" ]]; then
   chown -R "${PUID}:${PGID}" "${data}"

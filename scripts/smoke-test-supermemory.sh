@@ -129,8 +129,13 @@ for _ in $(seq 1 20); do
 done
 assert_equal "$(console_list --user admin:smoke-console)" "200" "first start: the console gets the API key once the server writes it"
 
+# Reproduce the persisted PID left by a crash in an earlier PID namespace.
+# Stop first so the old engine cannot rewrite its PID during the test.
+docker stop --time 60 "${container}" >/dev/null
+docker run --rm --volume "${data_dir}:/data" --entrypoint sh "${image}" -c   'mkdir -p /data/store/runtime/rivet; printf 113 > /data/store/runtime/rivet/engine.pid'
 start_container
 wait_healthy
+assert_equal "$(docker exec "${container}" sh -c 'cat /data/store/runtime/rivet/engine.pid.stale.*')"   "113" "a previous container PID is preserved instead of signalled"
 logs="$(docker logs "${container}" 2>&1)"
 [[ "${logs}" != *"downloading supermemory-server"* ]] \
   || fail "the server was downloaded again after the container was recreated"

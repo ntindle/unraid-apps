@@ -21,6 +21,12 @@ entrypoint downloads the `supermemory-server` release named by **Server Version*
 `/data/bin`, checks it against the SHA-256 pinned in the image, and runs it as user `99:100`.
 Every later start re-checks the file and reuses it.
 
+Each container must have its own App Data directory. On startup the launcher preserves any
+old `store/runtime/rivet/engine.pid` as `engine.pid.stale.*`: a PID from an earlier container
+can refer to an unrelated process after a restart. Server 0.0.8 otherwise sends SIGKILL to
+that reused PID and can kill itself. The database, keys and workflow state are retained.
+This launcher fix does not change an installed Server Version or migrate its database.
+
 | Path in App Data | Contents |
 | --- | --- |
 | `bin/` | The downloaded server, about 300 MB per version |

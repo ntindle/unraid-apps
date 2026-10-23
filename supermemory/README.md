@@ -34,6 +34,13 @@ This launcher fix does not change an installed Server Version or migrate its dat
 | `store/api-key` | The API key clients send |
 | `store/machine-key` | The key that unlocks the database |
 
+## Optional external database
+
+A pinned, opt-in [PostgreSQL compatibility patch](postgres/README.md) and offline
+migration tooling are maintained here for the recovered 0.0.8 page store. This is
+a separate deployment path; the standard template below still uses the upstream
+embedded database. Read its validation and backup requirements before opting in.
+
 ## Install
 
 1. Copy [`templates/supermemory.xml`](../templates/supermemory.xml) to

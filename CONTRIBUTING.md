@@ -2,6 +2,10 @@
 
 Changes stay at the Unraid layer: templates, icons, launcher images and their documentation.
 Bugs and feature requests for an application belong in that application's own repository.
+The pinned, opt-in Supermemory compatibility layer in `supermemory/postgres/` is an
+explicit local-maintenance exception; do not distribute upstream binaries or silently
+change the standard template's backend. Run `scripts/test-supermemory-postgres.sh`
+when changing that layer, in addition to the checks below.
 
 Before opening a pull request:
 

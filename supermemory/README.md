@@ -36,10 +36,12 @@ This launcher fix does not change an installed Server Version or migrate its dat
 
 ## Optional external database
 
-A pinned, opt-in [PostgreSQL compatibility patch](postgres/README.md) and offline
-migration tooling are maintained here for the recovered 0.0.8 page store. This is
-a separate deployment path; the standard template below still uses the upstream
-embedded database. Read its validation and backup requirements before opting in.
+The pinned, opt-in [PostgreSQL compatibility patch and migration tools](https://github.com/ntindle/supermemory/blob/factory-postgres/patches/postgres/README.md)
+are maintained in our [Supermemory fork](https://github.com/ntindle/supermemory),
+with [server changes and validation in PR #1](https://github.com/ntindle/supermemory/pull/1).
+The Unraid image, template and launcher remain in this repository. The standard
+template below uses the upstream embedded database; adopting the external backend
+requires the fork's separate migration and validation procedure.
 
 ## Install
 

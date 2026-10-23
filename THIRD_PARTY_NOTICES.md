@@ -60,9 +60,3 @@ packages `ca-certificates`, `curl` and `nginx-light`, each under its own license
 
 [`images/supermemory.png`](images/supermemory.png) is original artwork made for this
 repository and is covered by its MIT License. It is not Supermemory's logo.
-
-The optional `supermemory/postgres/` compatibility layer patches a locally obtained,
-checksum-pinned executable; generated binaries are not committed or published by
-this repository. It does not replace or waive the upstream license. Its migration
-tools depend on `@electric-sql/pglite`, `@electric-sql/pglite-socket`, and `pg`; those
-packages retain their respective licenses distributed with each package.

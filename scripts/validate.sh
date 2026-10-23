@@ -131,7 +131,7 @@ expect "executor icon sha256" "$(sha256sum "${repo_root}/images/executor.png" | 
   "b397f102f789c00365cc7910be4f1b297bef7fcacd6592b7f66f227f3388cfc8"
 
 # The published files must not carry a placeholder, a host-specific address or a secret.
-if grep -R -n -I --exclude-dir=node_modules -E "REPLACE_WITH_|YOUR_GITHUB_USERNAME|YOUR_REPO_NAME|change-me|sk-[a-z]+-[0-9a-f]{8}|sm_[A-Za-z0-9]{20}|\.ts\.net|192\.168\.[0-9]+\.[0-9]{2,3}|BEGIN (RSA|OPENSSH|EC) PRIVATE KEY" \
+if grep -R -n -I -E "REPLACE_WITH_|YOUR_GITHUB_USERNAME|YOUR_REPO_NAME|change-me|sk-[a-z]+-[0-9a-f]{8}|sm_[A-Za-z0-9]{20}|\.ts\.net|192\.168\.[0-9]+\.[0-9]{2,3}|BEGIN (RSA|OPENSSH|EC) PRIVATE KEY" \
   "${published[@]}"; then
   fail "published files contain a placeholder, a host-specific address or a secret-like value"
 fi

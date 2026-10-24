@@ -34,9 +34,9 @@ jobs:
       - name: Validate templates, profile and icons
         run: scripts/validate.sh
       - name: Check shell syntax
-        run: for script in scripts/*.sh supermemory/entrypoint.sh; do bash -n "${script}"; done
+        run: for script in scripts/*.sh supermemory/entrypoint.sh supermemory/postgres-image/*.sh; do bash -n "${script}"; done
       - name: Lint shell
-        run: shellcheck scripts/*.sh supermemory/entrypoint.sh
+        run: shellcheck scripts/*.sh supermemory/entrypoint.sh supermemory/postgres-image/*.sh
       - name: Check whitespace
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then

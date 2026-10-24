@@ -34,6 +34,17 @@ This launcher fix does not change an installed Server Version or migrate its dat
 | `store/api-key` | The API key clients send |
 | `store/machine-key` | The key that unlocks the database |
 
+## Optional external database
+
+Our opt-in [`:postgres` image channel](postgres-image/README.md) packages the
+pinned [PostgreSQL compatibility patch and migration tools](https://github.com/ntindle/supermemory/blob/main/patches/postgres/README.md)
+are maintained in our [Supermemory fork](https://github.com/ntindle/supermemory),
+with [server changes and validation in PR #1](https://github.com/ntindle/supermemory/pull/1).
+The Unraid image, template and launcher remain in this repository. The standard
+template below uses the upstream embedded database; adopting the external backend
+requires the fork's separate migration and validation procedure. The PostgreSQL
+image has versioned releases and CI checks for database persistence across restarts.
+
 ## Install
 
 1. Copy [`templates/supermemory.xml`](../templates/supermemory.xml) to

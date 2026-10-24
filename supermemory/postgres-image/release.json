@@ -1,0 +1,13 @@
+{
+  "version": "0.0.8-ntindle.1",
+  "upstreamVersion": "0.0.8",
+  "forkRepository": "ntindle/supermemory",
+  "forkCommit": "7dfa5c7cec5c616899071b2266ad0e7e8d48615b",
+  "sourceArchiveSha256": "c85e204684ffe63679aa2df74a6f036072b96fab4cda8d70b67651e550c681cd",
+  "launcherImage": "ghcr.io/ntindle/unraid-apps/supermemory@sha256:efdeed9b785d07923b550453dba2cc5324d2050e0cdf67e167a10ca68c3a2cc2",
+  "launcherSha256": "1b69adbb3acbc0c0e16603242101c17480c62e56aa24c444f5a667ec1a59c7a2",
+  "originalSha256": "87f32433d0179be80bb9d8a1bafbac65af4128324342a27ecb8bd1a77b5506f3",
+  "patchedSha256": "2425168590dc1c86342b7b335d64a5a573e3d47685eb95d2e1233abdaa1eed65",
+  "postgresImage": "pgvector/pgvector@sha256:ac08538c6f8b9904c33c8224c5e5706dbe760aca29db1d096972b4052c22a75d",
+  "channel": "ghcr.io/ntindle/unraid-apps/supermemory:postgres"
+}

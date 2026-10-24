@@ -1,0 +1,12 @@
+{
+  "name": "supermemory-postgres-image",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "format": "bunx --no-install prettier --write .",
+    "format:check": "bunx --no-install prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "3.6.2"
+  }
+}

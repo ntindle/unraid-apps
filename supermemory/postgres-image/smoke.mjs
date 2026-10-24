@@ -146,9 +146,12 @@ try {
   ]);
   await waitUntil(
     () =>
-      docker(["exec", db, "pg_isready", "-q", "-U", "postgres"], {
-        allowFailure: true,
-      }).status === 0,
+      docker(
+        ["exec", db, "pg_isready", "-q", "-h", "127.0.0.1", "-U", "postgres"],
+        {
+          allowFailure: true,
+        },
+      ).status === 0,
     "PostgreSQL readiness",
     60000,
   );
@@ -229,9 +232,12 @@ try {
   docker(["restart", db]);
   await waitUntil(
     () =>
-      docker(["exec", db, "pg_isready", "-q", "-U", "postgres"], {
-        allowFailure: true,
-      }).status === 0,
+      docker(
+        ["exec", db, "pg_isready", "-q", "-h", "127.0.0.1", "-U", "postgres"],
+        {
+          allowFailure: true,
+        },
+      ).status === 0,
     "database restart",
     60000,
   );

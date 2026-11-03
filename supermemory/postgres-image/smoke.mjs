@@ -66,6 +66,25 @@ async function api(key, method, route, body, host) {
   const data = await response.json().catch(() => null);
   return { status: response.status, data };
 }
+async function rpc(key, body, host) {
+  const response = await fetch(address() + "/mcp", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json, text/event-stream",
+      ...(key ? { Authorization: `Bearer ${key}` } : {}),
+      ...(host ? { Host: host } : {}),
+    },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(10000),
+  });
+  const data = await response.json().catch(() => null);
+  return {
+    status: response.status,
+    session: response.headers.get("mcp-session-id"),
+    data,
+  };
+}
 function sql(text) {
   const result = docker(
     [
@@ -205,6 +224,54 @@ try {
       .status,
     200,
   );
+  // MCP endpoint: no key (whatever the Host) or a wrong key is refused before any tool runs.
+  const ping = { jsonrpc: "2.0", id: 1, method: "ping" };
+  assert.equal((await rpc(null, ping)).status, 401);
+  assert.equal((await rpc(null, ping, "localhost")).status, 401);
+  assert.equal((await rpc("not-the-key", ping)).status, 401);
+  const init = await rpc(key, {
+    jsonrpc: "2.0",
+    id: 1,
+    method: "initialize",
+    params: {
+      protocolVersion: "2025-06-18",
+      capabilities: {},
+      clientInfo: { name: "factory-image-smoke", version: "1" },
+    },
+  });
+  assert.equal(init.status, 200);
+  assert(init.session, "initialize must assign an Mcp-Session-Id");
+  assert.equal(init.data.result.serverInfo.version, release.version);
+  const listed = await rpc(key, {
+    jsonrpc: "2.0",
+    id: 2,
+    method: "tools/list",
+  });
+  assert.deepEqual(
+    listed.data.result.tools.map((tool) => tool.name),
+    [
+      "search_memory",
+      "add_memory",
+      "listSpaces",
+      "listMemories",
+      "getDocument",
+      "whoAmI",
+    ],
+  );
+  const tool = async (name, args) =>
+    (
+      await rpc(key, {
+        jsonrpc: "2.0",
+        id: 3,
+        method: "tools/call",
+        params: { name, arguments: args },
+      })
+    ).data.result;
+  const who = await tool("whoAmI", {});
+  assert(!who.isError && who.content[0].text.includes(release.version));
+  const spaces = await tool("listSpaces", {});
+  assert(!spaces.isError, "listSpaces must succeed on an empty store");
+  assert((await tool("search_memory", { query: "x" })).isError);
   assert.equal(sql("SELECT count(*) FROM public.document;"), "0");
   assert.equal(
     sql("SELECT rolsuper FROM pg_roles WHERE rolname='supermemory_app';"),
@@ -268,6 +335,7 @@ try {
       nativePostgres: true,
       nonSuperuser: true,
       hostGuard: true,
+      mcpEndpoint: true,
       restartPersistence: true,
       bundleReused: true,
     }),

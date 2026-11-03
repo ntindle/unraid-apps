@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-release=0.0.8-ntindle.1
+release=0.0.8-ntindle.2
 if [[ "${1:-}" == --version ]]; then
   echo "Supermemory ${release} (upstream 0.0.8, external PostgreSQL)"
   exit 0

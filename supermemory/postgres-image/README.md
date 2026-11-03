@@ -1,7 +1,10 @@
 # Native PostgreSQL release
 
 `ghcr.io/ntindle/unraid-apps/supermemory:postgres` is our opt-in Supermemory
-release channel. `:0.0.8-ntindle.1` identifies its first immutable release.
+release channel. Each `:0.0.8-ntindle.N` tag is an immutable release: `.1` moved
+storage to PostgreSQL, and `.2` improves recall: tag-filtered vector searches keep
+scanning until they fill their limit, search and profile collapse near-duplicate
+memories, and agent plugins get an `/mcp` endpoint.
 The standard `:latest` launcher and Community Applications template are separate.
 
 The image packages the reviewed patch source from
@@ -61,8 +64,10 @@ SUPERMEMORY_POSTGRES_IMAGE=supermemory-postgres:test scripts/smoke-test-supermem
 
 The smoke test creates disposable synthetic data and an isolated PostgreSQL
 container. It checks missing-configuration refusal, binary identity, native schema,
-non-superuser access, authentication (including forged localhost), and persistence
-across both container restarts. It does not call a real LLM. The fork's integration
+non-superuser access, authentication (including forged localhost), the `/mcp`
+endpoint's key check and tools, and persistence across both container restarts.
+It does not call a real LLM. The fork's integration
 tools separately cover ingestion, recall, concurrency and crash recovery against a
 private migrated copy. CI publishes the exact image that passed the smoke test;
-release tags cannot be overwritten. Bump `release.json` for each new release.
+release tags cannot be overwritten. Bump `release.json` and the `release=` line
+in `entrypoint.sh` for each new release; the smoke test fails when they differ.

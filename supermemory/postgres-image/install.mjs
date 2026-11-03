@@ -30,6 +30,7 @@ export async function install({
     "runtime.mjs",
     "ingestion-queue.mjs",
     "workflow-outbox.mjs",
+    "recall.mjs",
     "pins.json",
     "launch.sh",
   ];

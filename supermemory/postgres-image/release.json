@@ -1,9 +1,9 @@
 {
-  "version": "0.0.8-ntindle.1",
+  "version": "0.0.8-ntindle.2",
   "upstreamVersion": "0.0.8",
   "forkRepository": "ntindle/supermemory",
-  "forkCommit": "7dfa5c7cec5c616899071b2266ad0e7e8d48615b",
-  "sourceArchiveSha256": "c85e204684ffe63679aa2df74a6f036072b96fab4cda8d70b67651e550c681cd",
+  "forkCommit": "2e9bfa8a3c0be231500f867ad54a72759feef37a",
+  "sourceArchiveSha256": "8eff9950c23afff03e133d50530e60ca2d4377e5ebc0d3657be446321704a8d1",
   "launcherImage": "ghcr.io/ntindle/unraid-apps/supermemory@sha256:efdeed9b785d07923b550453dba2cc5324d2050e0cdf67e167a10ca68c3a2cc2",
   "launcherSha256": "1b69adbb3acbc0c0e16603242101c17480c62e56aa24c444f5a667ec1a59c7a2",
   "originalSha256": "87f32433d0179be80bb9d8a1bafbac65af4128324342a27ecb8bd1a77b5506f3",

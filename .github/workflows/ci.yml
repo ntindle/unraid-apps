@@ -117,7 +117,7 @@ jobs:
           fi
       - name: Set up Docker Buildx
         if: steps.changed.outputs.build == 'true'
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
       - name: Build and push
         if: steps.changed.outputs.build == 'true'
         run: |
